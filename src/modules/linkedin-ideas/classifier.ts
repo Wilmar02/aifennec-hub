@@ -1,9 +1,9 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { env } from '../../infra/env.js';
 import { logger } from '../../infra/logger.js';
 import type { RawPost, ClassifiedPost } from './types.js';
 
-const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+const client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
 const SYSTEM_PROMPT = `You classify LinkedIn posts. For each post you receive, return a JSON object with these fields:
 
@@ -32,14 +32,15 @@ export async function classifyBatch(posts: RawPost[]): Promise<ClassifiedPost[]>
     .map((p, i) => `[${i}] ${p.body.slice(0, 800)}`)
     .join('\n\n---\n\n');
 
-  logger.info({ count: posts.length }, 'classifier: calling Claude');
+  logger.info({ count: posts.length }, 'classifier: calling OpenAI');
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
       max_tokens: 4096,
-      system: SYSTEM_PROMPT,
+      temperature: 0,
       messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
         {
           role: 'user',
           content: `Classify these ${posts.length} LinkedIn posts:\n\n${numbered}`,
@@ -47,10 +48,7 @@ export async function classifyBatch(posts: RawPost[]): Promise<ClassifiedPost[]>
       ],
     });
 
-    const text = response.content
-      .filter((b) => b.type === 'text')
-      .map((b) => (b as { text: string }).text)
-      .join('');
+    const text = response.choices[0]?.message?.content ?? '';
 
     const jsonStart = text.indexOf('[');
     const jsonEnd = text.lastIndexOf(']');

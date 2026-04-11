@@ -6,7 +6,7 @@ config();
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   PROXYCURL_API_KEY: z.string().min(20),
-  ANTHROPIC_API_KEY: z.string().startsWith('sk-ant-'),
+  OPENAI_API_KEY: z.string().startsWith('sk-'),
   GOOGLE_SHEET_ID: z.string().min(10),
   GOOGLE_SERVICE_ACCOUNT_JSON_PATH: z.string().default('./google-service-account.json'),
   TELEGRAM_BOT_TOKEN: z.string().regex(/^\d+:[A-Za-z0-9_-]+$/),
