@@ -7,7 +7,7 @@ export const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 export async function sendMessage(text: string): Promise<void> {
   try {
     await bot.api.sendMessage(env.TELEGRAM_DIGEST_CHAT_ID, text, {
-      parse_mode: 'Markdown',
+      parse_mode: 'HTML',
       link_preview_options: { is_disabled: true },
     });
   } catch (err) {

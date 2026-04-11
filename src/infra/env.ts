@@ -5,7 +5,7 @@ config();
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
-  PROXYCURL_API_KEY: z.string().min(20),
+  APIFY_TOKEN: z.string().min(20),
   OPENAI_API_KEY: z.string().startsWith('sk-'),
   GOOGLE_SHEET_ID: z.string().min(10),
   GOOGLE_SERVICE_ACCOUNT_JSON_PATH: z.string().default('./google-service-account.json'),

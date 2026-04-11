@@ -3,8 +3,11 @@ import { sendMessage } from '../../channels/telegram.js';
 import { logger } from '../../infra/logger.js';
 import type { PersistedPost } from './types.js';
 
-function escapeMarkdown(text: string): string {
-  return text.replace(/([_*[\]()~`>#+=|{}.!\\-])/g, '\\$1');
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function formatNumber(n: number): string {
@@ -19,7 +22,7 @@ export function formatDigest(posts: PersistedPost[], sheetUrl: string): string {
   });
 
   const lines: string[] = [
-    `🔥 *LinkedIn Viral Digest — ${date}*`,
+    `🔥 <b>LinkedIn Viral Digest — ${escapeHtml(date)}</b>`,
     '',
     `${posts.length} ideas nuevas hoy${posts.length > 0 ? '. Top por engagement:' : '.'}`,
     '',
@@ -27,14 +30,14 @@ export function formatDigest(posts: PersistedPost[], sheetUrl: string): string {
 
   posts.forEach((p, i) => {
     lines.push(
-      `${i + 1}. *${p.authorName}* — ${formatNumber(p.likes)} likes | ${formatNumber(p.comments)} comments`
+      `${i + 1}. <b>${escapeHtml(p.authorName)}</b> — ${formatNumber(p.likes)} likes | ${formatNumber(p.comments)} comments`
     );
-    lines.push(`   _"${p.hook}"_`);
-    lines.push(`   📎 ${p.postUrl}`);
+    lines.push(`   <i>"${escapeHtml(p.hook)}"</i>`);
+    lines.push(`   📎 ${escapeHtml(p.postUrl)}`);
     lines.push('');
   });
 
-  lines.push(`📊 Sheet completa: ${sheetUrl}`);
+  lines.push(`📊 Sheet completa: ${escapeHtml(sheetUrl)}`);
   return lines.join('\n');
 }
 

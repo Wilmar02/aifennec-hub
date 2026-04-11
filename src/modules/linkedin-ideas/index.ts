@@ -1,6 +1,6 @@
 import { logger } from '../../infra/logger.js';
 import { SEED_PROFILES } from './seed-list.js';
-import { fetchProfilePosts, sleep } from './proxycurl.js';
+import { fetchProfilePosts, sleep } from './apify.js';
 import { filterNewPosts } from './deduper.js';
 import { classifyBatch } from './classifier.js';
 import { insertPosts, fetchUnsyncedPosts, markSynced, fetchTodayTop } from './repository.js';
