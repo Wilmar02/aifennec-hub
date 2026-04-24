@@ -37,6 +37,33 @@ export interface LogSendInput {
   error?: string;
 }
 
+export interface LastSendRecord {
+  template: TemplateId;
+  sentAt: Date;
+}
+
+/**
+ * Última plantilla enviada para esta opp dentro de la ventana de N días
+ * (usado para escalation gating — limita "regreso al inicio" entre ciclos).
+ */
+export async function getLastSentInWindow(
+  ghlOppId: string,
+  windowDays = 35
+): Promise<LastSendRecord | null> {
+  const rows = await query<{ template_id: string; sent_at: string }>(
+    `SELECT template_id, sent_at
+       FROM cobranza_sends
+      WHERE ghl_opp_id = $1
+        AND status IN ('sent','queued')
+        AND sent_at >= now() - ($2 || ' days')::interval
+      ORDER BY sent_at DESC
+      LIMIT 1`,
+    [ghlOppId, String(windowDays)]
+  );
+  if (rows.length === 0) return null;
+  return { template: rows[0]!.template_id as TemplateId, sentAt: new Date(rows[0]!.sent_at) };
+}
+
 /** ¿Ya se envió este template para esta opp en el mes actual? (evita duplicados) */
 export async function alreadySentThisMonth(
   ghlOppId: string,

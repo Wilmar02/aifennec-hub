@@ -14,10 +14,10 @@ import {
   WA_TEMPLATE_BINDINGS,
   type CobranzaWaContext,
 } from '../../channels/whatsapp-meta.js';
-import { computeDecision } from './calendar.js';
+import { computeDecision, daysRelativeToDueDay, escalationDecide } from './calendar.js';
 import { renderTemplate, formatDate, formatMoney } from './templates.js';
 import { generateCobranzaPdf } from './pdf.js';
-import { alreadySentThisMonth, logSend } from './repository.js';
+import { alreadySentThisMonth, getLastSentInWindow, logSend } from './repository.js';
 import type {
   CobranzaContact,
   CobranzaItem,
@@ -184,23 +184,21 @@ export async function processOpportunity(
     return { action: 'skipped-already-paid', reason: `cubre hasta ${ultimoPago} >= ciclo ${thisCycle}` };
   }
 
-  let decision = computeDecision(today, mapped.diaPago);
+  // Escalation-gated decision: respeta secuencia + mínimos de espera vs. último envío.
+  // Esto previene saltos directos a T_PAUSA cuando solo se envió T_ZERO la víspera.
+  const daysFromDue = daysRelativeToDueDay(today, mapped.diaPago);
+  const lastSent = await getLastSentInWindow(mapped.ghlOppId, 35);
+  const decision = escalationDecide(daysFromDue, lastSent, today);
   if (!decision) {
-    return { action: 'skipped-no-decision', reason: 'no threshold hoy' };
+    return {
+      action: 'skipped-no-decision',
+      reason: lastSent
+        ? `gating: last=${lastSent.template} sent ${Math.floor((today.getTime() - lastSent.sentAt.getTime()) / 86_400_000)}d ago, next step espera más`
+        : 'no threshold hoy (sin previo)',
+    };
   }
 
-  // Regla de cortesía: si es el primer contacto del ciclo y se caería en T_PAUSA+ directo,
-  // bajar a T_ZERO — no tiene sentido mandar "servicio pausado" sin haber mandado la factura.
-  const neverSentT0 = !(await alreadySentThisMonth(mapped.ghlOppId, 'T_ZERO'));
-  if (neverSentT0 && ['T_PAUSA', 'T_PLUS_30', 'T_PLUS_45'].includes(decision.template)) {
-    logger.info(
-      { opp: opp.name, originalTemplate: decision.template, newTemplate: 'T_ZERO' },
-      'cobranza: downgrading to T_ZERO (primer contacto del ciclo)'
-    );
-    decision = { ...decision, template: 'T_ZERO', isCritical: false };
-  }
-
-  // Evitar duplicados en el mismo mes
+  // Evitar duplicados en el mismo mes (defensa adicional al gating)
   const duplicate = await alreadySentThisMonth(mapped.ghlOppId, decision.template);
   if (duplicate) {
     return { action: 'skipped-duplicate', templateId: decision.template };
