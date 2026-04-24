@@ -49,8 +49,13 @@ function currentCycleYYYYMM(today: Date): string {
 function readCf(opp: GhlOpportunity, id: string): string | undefined {
   const f = opp.customFields?.find((x) => (x as unknown as { id?: string }).id === id);
   if (!f) return undefined;
-  const anyF = f as unknown as { fieldValueString?: string; fieldValue?: string | number | boolean };
+  const anyF = f as unknown as {
+    fieldValueString?: string;
+    fieldValueNumber?: number;
+    fieldValue?: string | number | boolean;
+  };
   if (anyF.fieldValueString !== undefined) return anyF.fieldValueString;
+  if (anyF.fieldValueNumber !== undefined) return String(anyF.fieldValueNumber);
   if (anyF.fieldValue !== undefined) return String(anyF.fieldValue);
   return undefined;
 }
