@@ -109,6 +109,56 @@ function resolveAlias(arg: string | undefined): { oppId: string; label: string }
   return CLIENT_ALIASES[arg.toLowerCase()] ?? null;
 }
 
+async function registrarIngreso(
+  ctx: Context,
+  oppId: string,
+  label: string,
+  alias: string,
+  monto: number,
+  cubreHasta: string,
+  moneda: string
+): Promise<void> {
+  try {
+    const opp = await fetchOpp(oppId);
+    await updateUltimoPago(oppId, cubreHasta);
+    await query(
+      `INSERT INTO ingresos (ghl_opp_id, ghl_contact_id, cliente_alias, cliente_label, monto, moneda, cubre_hasta, metodo, fuente)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [
+        oppId,
+        opp?.contactId ?? '',
+        alias,
+        label,
+        monto,
+        moneda,
+        cubreHasta,
+        '',
+        'telegram',
+      ]
+    );
+    if (opp?.contactId) {
+      await addContactNote(
+        opp.contactId,
+        `[ingreso:telegram] Pago recibido ${formatMoney(monto)} ${moneda}. Cubre hasta ${cubreHasta}. Registrado via /ingreso.`
+      );
+    }
+    const editable = ctx.callbackQuery?.message;
+    const text =
+      `✅ <b>${label}</b>\n` +
+      `Ingreso registrado: <b>${formatMoney(monto)} ${moneda}</b>\n` +
+      `Cubre hasta: <b>${cubreHasta}</b>\n` +
+      `Próximo cobro: ${nextMonth(cubreHasta)}-01`;
+    if (editable) {
+      await ctx.editMessageText(text, { parse_mode: 'HTML' });
+    } else {
+      await ctx.reply(text, { parse_mode: 'HTML' });
+    }
+  } catch (err) {
+    logger.error({ err, alias, monto, cubreHasta }, 'cobranza: registrarIngreso failed');
+    await ctx.reply(`❌ Error registrando ingreso: ${(err as Error).message.slice(0, 200)}`);
+  }
+}
+
 function aliasList(): string {
   const seen = new Set<string>();
   const rows: string[] = [];
@@ -270,6 +320,179 @@ export function registerCobranzaCommands(bot: Bot): void {
       await ctx.reply('✅ Nadie debe ahora — todos al día para ' + currentCycle);
     } else {
       await ctx.reply(['<b>Pendientes hoy:</b>', '', ...rows].join('\n'), { parse_mode: 'HTML' });
+    }
+  });
+
+  /** /ingreso — flujo interactivo para registrar un pago recibido. */
+  bot.command('ingreso', async (ctx) => {
+    if (!isAuthorized(ctx)) return;
+    const argsText = (ctx.match ?? '').toString().trim();
+    const parts = argsText.split(/\s+/).filter(Boolean);
+    // Formato rápido: /ingreso <alias> <monto> <YYYY-MM>
+    if (parts.length >= 3) {
+      const alias = parts[0];
+      const monto = Number(parts[1]);
+      const cubre = parts[2];
+      const resolved = resolveAlias(alias);
+      if (!resolved || !monto || !/^\d{4}-\d{2}$/.test(cubre)) {
+        await ctx.reply('❌ Formato: /ingreso <alias> <monto> <YYYY-MM>\nEjemplo: /ingreso bluebox 4900000 2026-04');
+        return;
+      }
+      await registrarIngreso(ctx, resolved.oppId, resolved.label, alias, monto, cubre, 'COP');
+      return;
+    }
+    // Flujo interactivo: step 1 elegir cliente
+    const unique = Array.from(new Set(Object.values(CLIENT_ALIASES).map((v) => v.oppId)));
+    const kb = new InlineKeyboard();
+    for (const oppId of unique) {
+      const entry = Object.entries(CLIENT_ALIASES).find(([, v]) => v.oppId === oppId);
+      if (!entry) continue;
+      const [alias, v] = entry;
+      kb.text(v.label, `ing:cli:${alias}`).row();
+    }
+    kb.text('❌ Cancelar', 'ing:cancel');
+    await ctx.reply('📥 <b>Registrar ingreso</b>\n¿De quién?', { parse_mode: 'HTML', reply_markup: kb });
+  });
+
+  // Step 2: elegir monto (completo vs parcial)
+  bot.callbackQuery(/^ing:cli:([a-z-]+)$/, async (ctx) => {
+    if (!isAuthorized(ctx)) return;
+    const alias = (ctx.match as RegExpMatchArray)[1]!;
+    const resolved = resolveAlias(alias);
+    if (!resolved) {
+      await ctx.answerCallbackQuery('alias inválido');
+      return;
+    }
+    const opp = await fetchOpp(resolved.oppId);
+    if (!opp) {
+      await ctx.answerCallbackQuery('no se pudo leer opp');
+      return;
+    }
+    const kb = new InlineKeyboard()
+      .text(`✅ Completo ${formatMoney(opp.monto)}`, `ing:monto:${alias}:${opp.monto}`)
+      .row()
+      .text('✏️ Parcial (escribe monto)', `ing:custom:${alias}`)
+      .row()
+      .text('❌ Cancelar', 'ing:cancel');
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageText(
+      `📥 <b>${resolved.label}</b>\nMonto esperado: <b>${formatMoney(opp.monto)}</b>\n¿Cuánto ingresó?`,
+      { parse_mode: 'HTML', reply_markup: kb }
+    );
+  });
+
+  // Step 3: elegir mes cubierto
+  bot.callbackQuery(/^ing:monto:([a-z-]+):(\d+)$/, async (ctx) => {
+    if (!isAuthorized(ctx)) return;
+    const m = ctx.match as RegExpMatchArray;
+    const alias = m[1]!;
+    const monto = Number(m[2]);
+    const resolved = resolveAlias(alias);
+    if (!resolved) {
+      await ctx.answerCallbackQuery('alias inválido');
+      return;
+    }
+    const today = new Date();
+    const curr = currentCycleYYYYMM(today);
+    const prev = currentCycleYYYYMM(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+    const next = currentCycleYYYYMM(new Date(today.getFullYear(), today.getMonth() + 1, 1));
+    const kb = new InlineKeyboard()
+      .text(`📆 ${prev}`, `ing:exec:${alias}:${monto}:${prev}`)
+      .text(`📆 ${curr}`, `ing:exec:${alias}:${monto}:${curr}`)
+      .text(`📆 ${next}`, `ing:exec:${alias}:${monto}:${next}`)
+      .row()
+      .text('❌ Cancelar', 'ing:cancel');
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageText(
+      `📥 <b>${resolved.label}</b>\nMonto: <b>${formatMoney(monto)}</b>\n¿Qué mes cubre este pago?`,
+      { parse_mode: 'HTML', reply_markup: kb }
+    );
+  });
+
+  // Step 4: ejecutar
+  bot.callbackQuery(/^ing:exec:([a-z-]+):(\d+):(\d{4}-\d{2})$/, async (ctx) => {
+    if (!isAuthorized(ctx)) return;
+    const m = ctx.match as RegExpMatchArray;
+    const alias = m[1]!;
+    const monto = Number(m[2]);
+    const cubre = m[3]!;
+    const resolved = resolveAlias(alias);
+    if (!resolved) {
+      await ctx.answerCallbackQuery('alias inválido');
+      return;
+    }
+    await ctx.answerCallbackQuery('Registrando...');
+    await registrarIngreso(ctx, resolved.oppId, resolved.label, alias, monto, cubre, 'COP');
+  });
+
+  bot.callbackQuery('ing:cancel', async (ctx) => {
+    if (!isAuthorized(ctx)) return;
+    await ctx.answerCallbackQuery('Cancelado');
+    await ctx.editMessageText('❌ Cancelado.');
+  });
+
+  /** /ingresos — últimos 10 pagos recibidos. */
+  bot.command('ingresos', async (ctx) => {
+    if (!isAuthorized(ctx)) return;
+    try {
+      const rows = await query<{
+        cliente_label: string;
+        monto: string;
+        moneda: string;
+        cubre_hasta: string;
+        recibido_at: string;
+      }>(
+        `SELECT cliente_label, monto::text, moneda, cubre_hasta, recibido_at
+           FROM ingresos ORDER BY recibido_at DESC LIMIT 10`
+      );
+      if (rows.length === 0) {
+        await ctx.reply('Sin ingresos registrados aún.');
+        return;
+      }
+      const lines = rows.map((r) => {
+        const d = new Date(r.recibido_at).toISOString().slice(0, 10);
+        return `${d} · <b>${r.cliente_label}</b> · ${formatMoney(Number(r.monto))} ${r.moneda} · cubre ${r.cubre_hasta}`;
+      });
+      await ctx.reply(['<b>Últimos 10 ingresos:</b>', '', ...lines].join('\n'), { parse_mode: 'HTML' });
+    } catch (err) {
+      logger.error({ err }, 'cobranza: /ingresos failed');
+      await ctx.reply('❌ Error leyendo ingresos.');
+    }
+  });
+
+  /** /resumen — balance del mes actual. */
+  bot.command('resumen', async (ctx) => {
+    if (!isAuthorized(ctx)) return;
+    try {
+      const now = new Date();
+      const cycle = currentCycleYYYYMM(now);
+      const rows = await query<{
+        cliente_label: string;
+        total: string;
+        moneda: string;
+      }>(
+        `SELECT cliente_label, SUM(monto)::text AS total, moneda
+           FROM ingresos
+          WHERE cubre_hasta = $1
+          GROUP BY cliente_label, moneda
+          ORDER BY SUM(monto) DESC`,
+        [cycle]
+      );
+      const total = rows.reduce((a, r) => a + Number(r.total), 0);
+      const byClient = rows.map((r) => `• <b>${r.cliente_label}</b>: ${formatMoney(Number(r.total))} ${r.moneda}`);
+      await ctx.reply(
+        [
+          `<b>💰 Resumen ingresos ciclo ${cycle}</b>`,
+          '',
+          ...byClient,
+          '',
+          `<b>TOTAL cobrado:</b> ${formatMoney(total)} COP (equiv)`,
+        ].join('\n'),
+        { parse_mode: 'HTML' }
+      );
+    } catch (err) {
+      logger.error({ err }, 'cobranza: /resumen failed');
+      await ctx.reply('❌ Error generando resumen.');
     }
   });
 
