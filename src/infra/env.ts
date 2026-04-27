@@ -24,6 +24,9 @@ const envSchema = z.object({
   COBRANZA_TIMEZONE: z.string().default('America/Bogota'),
   COBRANZA_DRY_RUN: z.coerce.boolean().default(true),
   COBRANZA_SEND_WHATSAPP: z.coerce.boolean().default(false),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_KEY: z.string().optional(),
+  ALLOWED_TELEGRAM_IDS: z.string().default(''),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('production'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });

@@ -1,0 +1,155 @@
+import { CUSTOM_MAPPINGS } from './categorias.js';
+import type { ParsedTransaction, TransactionType } from './types.js';
+
+const COMBINING_DIACRITICS = /[̀-ͯ]/g;
+
+export function extractAmount(text: string): number | null {
+  const clean = text.toLowerCase().replace(/\$/g, '').trim();
+
+  const kMatch = clean.match(/(\d+(?:[.,]\d+)?)\s*k\b/i);
+  if (kMatch) return parseFloat(kMatch[1]!.replace(',', '.')) * 1000;
+
+  const milMatch = clean.match(/(\d+(?:[.,]\d+)?)\s*mil\b/i);
+  if (milMatch) return parseFloat(milMatch[1]!.replace(',', '.')) * 1000;
+
+  const bigMatch = clean.match(/(\d{1,3}(?:[.,]\d{3})+)/);
+  if (bigMatch) return parseInt(bigMatch[1]!.replace(/[.,]/g, ''), 10);
+
+  const plainMatch = clean.match(/(\d{4,})/);
+  if (plainMatch) return parseInt(plainMatch[1]!, 10);
+
+  const smallMatch = clean.match(/(\d{2,3})/);
+  if (smallMatch) return parseInt(smallMatch[1]!, 10);
+
+  return null;
+}
+
+const ACCOUNT_PATTERNS: Record<string, string[]> = {
+  bancolombia: ['bancolombia', 'bancolom'],
+  nequi: ['nequi'],
+  daviplata: ['daviplata', 'davi plata'],
+  'nu colombia': ['nu ', 'nu colombia', 'nubank'],
+  efectivo: ['efectivo', 'cash', 'plata'],
+  'dolar app': ['dolar app', 'dolarapp', 'dolares'],
+  'davivienda credito': ['davivienda', 'credito davivienda'],
+};
+
+export function extractAccount(text: string): string {
+  const lower = text.toLowerCase().normalize('NFD').replace(COMBINING_DIACRITICS, '');
+  for (const [account, patterns] of Object.entries(ACCOUNT_PATTERNS)) {
+    if (patterns.some((p) => lower.includes(p))) return account;
+  }
+  return 'efectivo';
+}
+
+const INCOME_KEYWORDS = [
+  'ingreso', 'recibi', 'recibi', 'me pagaron', 'salario', 'sueldo', 'honorarios',
+  'freelance', 'dividendo', 'venta', 'cobre', 'transferencia recibida',
+  'me consignaron', 'pago recibido', 'ganancia', 'rendimiento', 'intereses',
+  'arriendo cobrado', 'prima',
+];
+const SAVINGS_KEYWORDS = ['ahorro', 'ahorre', 'fondo emergencia', 'reserva', 'pension voluntaria', 'afc'];
+const INVESTMENT_KEYWORDS = [
+  'inversion', 'inverti', 'etf', 'sp500', 'acciones', 'cdt',
+  'fiducia', 'crypto', 'bitcoin', 'btc', 'finca raiz', 'lote', 'crowdfunding',
+];
+const DEBT_KEYWORDS = [
+  'cuota hipoteca', 'pago hipoteca', 'cuota vehiculo', 'pago tc', 'tarjeta credito',
+  'libranza', 'icetex', 'abono deuda', 'cuota credito', 'pago prestamo',
+];
+
+export function detectTransactionType(text: string): { type: TransactionType; confidence: number } {
+  const lower = text.toLowerCase().normalize('NFD').replace(COMBINING_DIACRITICS, '');
+  if (INCOME_KEYWORDS.some((k) => lower.includes(k))) return { type: 'income', confidence: 0.85 };
+  if (SAVINGS_KEYWORDS.some((k) => lower.includes(k))) return { type: 'savings', confidence: 0.85 };
+  if (INVESTMENT_KEYWORDS.some((k) => lower.includes(k))) return { type: 'investment', confidence: 0.85 };
+  if (DEBT_KEYWORDS.some((k) => lower.includes(k))) return { type: 'debt_payment', confidence: 0.85 };
+  return { type: 'expense', confidence: 0.6 };
+}
+
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(COMBINING_DIACRITICS, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\b\d{4,}\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function categorize(
+  text: string,
+  typeHint?: TransactionType
+): { categoria: string; subcategoria: string; tipo_transaccion: TransactionType; confidence: number } {
+  const normalized = normalize(text);
+  const sortedMappings = Object.entries(CUSTOM_MAPPINGS).sort((a, b) => b[0].length - a[0].length);
+  for (const [keyword, mapping] of sortedMappings) {
+    if (normalized.includes(normalize(keyword))) {
+      return {
+        categoria: mapping.cat,
+        subcategoria: mapping.sub,
+        tipo_transaccion: mapping.tipo,
+        confidence: 0.95,
+      };
+    }
+  }
+  return {
+    categoria: 'Otros Gastos',
+    subcategoria: 'Otros No Clasificados',
+    tipo_transaccion: typeHint ?? 'expense',
+    confidence: 0.3,
+  };
+}
+
+export function getBogotaDate(): { fecha: string; mes: string } {
+  const now = new Date();
+  const fecha = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+  const mesNum = parseInt(fecha.split('-')[1]!, 10);
+  const meses = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+  ];
+  return { fecha, mes: meses[mesNum - 1]! };
+}
+
+function cleanDescription(text: string): string {
+  let desc = text
+    .replace(/\$?\d{1,3}(?:[.,]\d{3})+/g, '')
+    .replace(/\d+\s*(?:k|mil)\b/gi, '')
+    .replace(/\d{4,}/g, '')
+    .replace(/\b(?:bancolombia|nequi|daviplata|nu\s*colombia|efectivo|dolar\s*app|davivienda)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!desc) desc = text.trim();
+  return desc.charAt(0).toUpperCase() + desc.slice(1);
+}
+
+export function parseMessage(text: string): ParsedTransaction | null {
+  const amount = extractAmount(text);
+  if (!amount || amount <= 0) return null;
+  const account = extractAccount(text);
+  const typeDetection = detectTransactionType(text);
+  const cat = categorize(text, typeDetection.type);
+  const { fecha, mes } = getBogotaDate();
+  const confidence =
+    cat.confidence >= 0.9 ? cat.confidence : Math.min(1, (typeDetection.confidence + cat.confidence) / 2);
+  return {
+    descripcion: cleanDescription(text),
+    Valor: amount,
+    tipo_transaccion: cat.tipo_transaccion,
+    categoria: cat.categoria,
+    subcategoria: cat.subcategoria,
+    cuenta: account,
+    fecha,
+    mes,
+    moneda: 'COP',
+    fuente: 'telegram',
+    confidence,
+  };
+}

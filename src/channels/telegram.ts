@@ -2,6 +2,7 @@ import { Bot } from 'grammy';
 import { env } from '../infra/env.js';
 import { logger } from '../infra/logger.js';
 import { registerCobranzaCommands } from '../modules/cobranza/telegram-commands.js';
+import { registerGastosCommands } from '../modules/gastos/telegram-commands.js';
 
 export const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 
@@ -10,6 +11,11 @@ let commandsRegistered = false;
 function ensureCommandsRegistered(): void {
   if (commandsRegistered) return;
   registerCobranzaCommands(bot);
+  if (env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY) {
+    registerGastosCommands(bot);
+  } else {
+    logger.warn('gastos: SUPABASE_URL/SUPABASE_SERVICE_KEY no configurados, handlers /gasto deshabilitados');
+  }
   commandsRegistered = true;
 }
 
