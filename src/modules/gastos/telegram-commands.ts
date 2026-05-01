@@ -89,11 +89,9 @@ setInterval(() => {
 const ACCOUNT_OPTIONS = [
   { label: '🏦 Bancolombia débito', value: 'bancolombia debito' },
   { label: '💳 Bancolombia crédito', value: 'bancolombia credito' },
-  { label: '📱 Nequi', value: 'nequi' },
-  { label: '📲 Daviplata', value: 'daviplata' },
-  { label: '💳 Nu Colombia', value: 'nu colombia' },
-  { label: '💳 Davivienda crédito', value: 'davivienda credito' },
   { label: '🏦 Davivienda débito', value: 'davivienda debito' },
+  { label: '💳 Davivienda crédito', value: 'davivienda credito' },
+  { label: '💳 Nu Colombia', value: 'nu colombia' },
   { label: '💲 Dólar App', value: 'dolar app' },
   { label: '💵 Efectivo', value: 'efectivo' },
 ];
@@ -449,8 +447,6 @@ export function registerGastosCommands(bot: Bot): void {
       'davivienda debito': 'debito',
       'davivienda credito': 'credito',
       'nu colombia': 'credito',
-      nequi: 'debito',
-      daviplata: 'debito',
       'dolar app': 'debito',
       efectivo: 'efectivo',
     };

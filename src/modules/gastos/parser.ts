@@ -37,8 +37,6 @@ const ACCOUNT_PATTERNS: Record<string, { patterns: string[]; tipo: 'debito' | 'c
   'bancolombia debito': { patterns: ['bancolombia debito', 'bcol debito', 'cuenta ahorros bancolombia'], tipo: 'debito' },
   'bancolombia credito': { patterns: ['bancolombia credito', 'tc bancolombia', 'tarjeta bancolombia'], tipo: 'credito' },
   bancolombia: { patterns: ['bancolombia', 'bancolom'], tipo: 'ambiguo' },
-  nequi: { patterns: ['nequi'], tipo: 'debito' },
-  daviplata: { patterns: ['daviplata', 'davi plata'], tipo: 'debito' },
   'nu colombia': { patterns: ['nu ', 'nu colombia', 'nubank', 'nucolombia'], tipo: 'credito' },
   'davivienda credito': { patterns: ['davivienda credito', 'credito davivienda', 'tc davivienda'], tipo: 'credito' },
   'davivienda debito': { patterns: ['davivienda debito', 'cuenta ahorros davivienda'], tipo: 'debito' },
