@@ -265,6 +265,12 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   vercel: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   hostinger: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   vps: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
+  canva: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
+  notion: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
+  apify: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
+  github: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
+  cursor: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
+  figma: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   bonos: { cat: 'Inversiones', sub: 'Bonos', tipo: 'investment' },
   'pago intereses': { cat: 'Inversiones', sub: 'Pagos de Intereses', tipo: 'investment' },
   // Activos adquiridos (cuota inicial / compra) — NO son gastos del mes
@@ -310,11 +316,19 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   // ============================================================
   // 6. AHORRO (4 cubetas con %: Colchón 20% / Inversiones-Lote 30% / Viajes 10% / Hipoteca 40%)
   // ============================================================
-  ahorro: { cat: 'Ahorro', sub: 'Ahorro', tipo: 'savings' },
+  ahorro: { cat: 'Ahorro', sub: 'Ahorro general', tipo: 'savings' },
+  // Las 4 cubetas del Excel (sheet AHORROS)
   'colchon financiero': { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
   'fondo emergencia': { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
+  colchon: { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
+  emergencia: { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
+  'ahorro lote': { cat: 'Ahorro', sub: 'Inversión Lote', tipo: 'savings' },
+  'ahorro inversiones': { cat: 'Ahorro', sub: 'Inversión Lote', tipo: 'savings' },
+  'ahorro viajes': { cat: 'Ahorro', sub: 'Viajes y disfrute', tipo: 'savings' },
   'ahorro viaje': { cat: 'Ahorro', sub: 'Viajes y disfrute', tipo: 'savings' },
+  'ahorro disfrute': { cat: 'Ahorro', sub: 'Viajes y disfrute', tipo: 'savings' },
   'ahorro hipoteca': { cat: 'Ahorro', sub: 'Hipoteca', tipo: 'savings' },
+  'meta hipoteca': { cat: 'Ahorro', sub: 'Hipoteca', tipo: 'savings' },
 
   // ============================================================
   // INGRESOS — subcategorías idénticas a las del Excel (Salario sheet INICIO)
@@ -324,6 +338,11 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   salario: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
   sueldo: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
   quincena: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
+  // Desglose de quincenas (Excel sheet ENERO los registra así)
+  '1era quincena': { cat: 'Salario', sub: '1era Quincena', tipo: 'income' },
+  'primera quincena': { cat: 'Salario', sub: '1era Quincena', tipo: 'income' },
+  '2da quincena': { cat: 'Salario', sub: '2da Quincena', tipo: 'income' },
+  'segunda quincena': { cat: 'Salario', sub: '2da Quincena', tipo: 'income' },
   bonificacion: { cat: 'Salario', sub: 'Bonificaciones', tipo: 'income' },
   bonificaciones: { cat: 'Salario', sub: 'Bonificaciones', tipo: 'income' },
   bono: { cat: 'Salario', sub: 'Bonificaciones', tipo: 'income' },
