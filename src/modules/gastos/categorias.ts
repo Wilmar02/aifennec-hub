@@ -80,15 +80,11 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   pollo: { cat: 'Alimento', sub: 'Mercado', tipo: 'expense' },
 
   // ============================================================
-  // 3. TRANSPORTE
+  // 3. TRANSPORTE — solo gastos operativos del vehículo
+  // (las cuotas de crédito vehicular y compra del carro van a Deudas/Inversiones)
   // ============================================================
-  'cuota auto': { cat: 'Transporte', sub: 'Cuotas del auto/moto', tipo: 'expense' },
-  'cuota carro': { cat: 'Transporte', sub: 'Cuotas del auto/moto', tipo: 'expense' },
-  autobog: { cat: 'Transporte', sub: 'Cuotas del auto/moto', tipo: 'expense' },
   'carro accesorios': { cat: 'Transporte', sub: 'Reparaciones', tipo: 'expense' },
   accesorios: { cat: 'Transporte', sub: 'Reparaciones', tipo: 'expense' },
-
-  'cuota moto': { cat: 'Transporte', sub: 'Cuotas del auto/moto', tipo: 'expense' },
   gasolina: { cat: 'Transporte', sub: 'Gasolina', tipo: 'expense' },
   tanqueo: { cat: 'Transporte', sub: 'Gasolina', tipo: 'expense' },
   acpm: { cat: 'Transporte', sub: 'Gasolina', tipo: 'expense' },
@@ -271,20 +267,43 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   vps: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   bonos: { cat: 'Inversiones', sub: 'Bonos', tipo: 'investment' },
   'pago intereses': { cat: 'Inversiones', sub: 'Pagos de Intereses', tipo: 'investment' },
+  // Activos adquiridos (cuota inicial / compra) — NO son gastos del mes
+  'cuota inicial vehiculo': { cat: 'Inversiones', sub: 'Vehículo', tipo: 'investment' },
+  'cuota inicial carro': { cat: 'Inversiones', sub: 'Vehículo', tipo: 'investment' },
+  'cuota inicial auto': { cat: 'Inversiones', sub: 'Vehículo', tipo: 'investment' },
+  'compra vehiculo': { cat: 'Inversiones', sub: 'Vehículo', tipo: 'investment' },
+  'compra carro': { cat: 'Inversiones', sub: 'Vehículo', tipo: 'investment' },
+  'compra auto': { cat: 'Inversiones', sub: 'Vehículo', tipo: 'investment' },
 
   // ============================================================
-  // 10. DEUDAS
+  // 10. DEUDAS — subcategorías por crédito específico
   // ============================================================
-  'tarjeta credito': { cat: 'Deudas', sub: 'Tarjeta de Crédito Codensa', tipo: 'debt_payment' },
+  // Tarjetas de crédito
+  'tarjeta credito': { cat: 'Deudas', sub: 'Tarjeta de Crédito', tipo: 'debt_payment' },
   'tarjeta codensa': { cat: 'Deudas', sub: 'Tarjeta de Crédito Codensa', tipo: 'debt_payment' },
-  'pago tc': { cat: 'Deudas', sub: 'Tarjeta de Crédito Codensa', tipo: 'debt_payment' },
-  'abono capital': { cat: 'Deudas', sub: 'Abono a capital apartamento', tipo: 'debt_payment' },
-  'abono a capital': { cat: 'Deudas', sub: 'Abono a capital apartamento', tipo: 'debt_payment' },
-  'abono apartamento': { cat: 'Deudas', sub: 'Abono a capital apartamento', tipo: 'debt_payment' },
-  'abono apto': { cat: 'Deudas', sub: 'Abono a capital apartamento', tipo: 'debt_payment' },
-  hipoteca: { cat: 'Deudas', sub: 'Abono a capital apartamento', tipo: 'debt_payment' },
-  'pago prestamo': { cat: 'Deudas', sub: 'Préstamo 2', tipo: 'debt_payment' },
-  prestamo: { cat: 'Deudas', sub: 'Préstamo 2', tipo: 'debt_payment' },
+  'pago tc': { cat: 'Deudas', sub: 'Tarjeta de Crédito', tipo: 'debt_payment' },
+  'pago tarjeta nu': { cat: 'Deudas', sub: 'Tarjeta de Crédito Nu', tipo: 'debt_payment' },
+  'tarjeta nu': { cat: 'Deudas', sub: 'Tarjeta de Crédito Nu', tipo: 'debt_payment' },
+  // Crédito hipotecario Davivienda
+  'abono apartamento': { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
+  'abono apto': { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
+  'abono hipoteca': { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
+  'cuota hipoteca': { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
+  'pago hipoteca': { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
+  hipoteca: { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
+  // Crédito vehicular Davivienda
+  'abono vehiculo': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
+  'abono carro': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
+  'cuota vehiculo': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
+  'cuota carro': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
+  'pago vehiculo': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
+  'credito vehiculo': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
+  'credito carro': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
+  // Genéricos (después de los específicos por length sort)
+  'abono capital': { cat: 'Deudas', sub: 'Abono a capital', tipo: 'debt_payment' },
+  'abono a capital': { cat: 'Deudas', sub: 'Abono a capital', tipo: 'debt_payment' },
+  'pago prestamo': { cat: 'Deudas', sub: 'Préstamo', tipo: 'debt_payment' },
+  prestamo: { cat: 'Deudas', sub: 'Préstamo', tipo: 'debt_payment' },
   libranza: { cat: 'Deudas', sub: 'Préstamo 2', tipo: 'debt_payment' },
   icetex: { cat: 'Deudas', sub: 'Préstamo 2', tipo: 'debt_payment' },
 
