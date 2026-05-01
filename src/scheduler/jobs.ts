@@ -3,6 +3,7 @@ import { env } from '../infra/env.js';
 import { logger } from '../infra/logger.js';
 import { runLinkedinIdeasJob } from '../modules/linkedin-ideas/index.js';
 import { runCobranzaJob } from '../modules/cobranza/index.js';
+import { runCuotasResumenMensual, runCuotasRecordatorioDiario } from '../modules/gastos/cuotas-cron.js';
 
 export function startScheduler(): void {
   logger.info(
@@ -38,4 +39,30 @@ export function startScheduler(): void {
   } else {
     logger.warn('scheduler: GHL_TOKEN not set, cobranza job disabled');
   }
+
+  // Resumen mensual de cuotas: día 1 de cada mes a las 8 AM Bogotá
+  logger.info('scheduler: registering cuotas-resumen-mensual job (1 de mes 8 AM)');
+  cron.schedule(
+    '0 8 1 * *',
+    () => {
+      logger.info('scheduler: triggering cuotas-resumen-mensual');
+      runCuotasResumenMensual().catch((err) => {
+        logger.error({ err }, 'scheduler: cuotas-resumen crashed');
+      });
+    },
+    { timezone: 'America/Bogota' }
+  );
+
+  // Recordatorio diario: si alguna cuota vence en exactamente 3 días, avisa
+  logger.info('scheduler: registering cuotas-recordatorio-diario job (8 AM Bogotá)');
+  cron.schedule(
+    '0 8 * * *',
+    () => {
+      logger.info('scheduler: triggering cuotas-recordatorio-diario');
+      runCuotasRecordatorioDiario().catch((err) => {
+        logger.error({ err }, 'scheduler: cuotas-recordatorio crashed');
+      });
+    },
+    { timezone: 'America/Bogota' }
+  );
 }
