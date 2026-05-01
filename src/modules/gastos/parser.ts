@@ -1,4 +1,4 @@
-import { CUSTOM_MAPPINGS } from './categorias.js';
+import { CUSTOM_MAPPINGS, FALLBACK_BY_TYPE } from './categorias.js';
 import type { ParsedTransaction, TransactionType } from './types.js';
 
 const COMBINING_DIACRITICS = /[̀-ͯ]/g;
@@ -94,9 +94,10 @@ export function categorize(
       };
     }
   }
+  const fallback = FALLBACK_BY_TYPE[typeHint ?? 'expense'];
   return {
-    categoria: 'Otros Gastos',
-    subcategoria: 'Otros No Clasificados',
+    categoria: fallback.cat,
+    subcategoria: fallback.sub,
     tipo_transaccion: typeHint ?? 'expense',
     confidence: 0.3,
   };
