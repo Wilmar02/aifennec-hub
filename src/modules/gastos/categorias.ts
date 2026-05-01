@@ -317,6 +317,8 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   // 6. AHORRO (4 cubetas con %: Colchón 20% / Inversiones-Lote 30% / Viajes 10% / Hipoteca 40%)
   // ============================================================
   ahorro: { cat: 'Ahorro', sub: 'Ahorro general', tipo: 'savings' },
+  'cajita nu': { cat: 'Ahorro', sub: 'Cajita Nu', tipo: 'savings' },
+  'cajita': { cat: 'Ahorro', sub: 'Cajita Nu', tipo: 'savings' },
   // Las 4 cubetas del Excel (sheet AHORROS)
   'colchon financiero': { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
   'fondo emergencia': { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
