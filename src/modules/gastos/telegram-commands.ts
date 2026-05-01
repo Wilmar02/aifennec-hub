@@ -93,6 +93,7 @@ const ACCOUNT_OPTIONS = [
   { label: '💳 Davivienda crédito', value: 'davivienda credito' },
   { label: '💳 Nu Colombia', value: 'nu colombia' },
   { label: '💲 Dólar App', value: 'dolar app' },
+  { label: '🇺🇸 Mercury (USD)', value: 'mercury' },
   { label: '💵 Efectivo', value: 'efectivo' },
 ];
 
@@ -448,12 +449,17 @@ export function registerGastosCommands(bot: Bot): void {
       'davivienda credito': 'credito',
       'nu colombia': 'credito',
       'dolar app': 'debito',
+      mercury: 'debito',
       efectivo: 'efectivo',
     };
+    // Si el user eligió Mercury o Dolar App, cambiar moneda a USD
+    const usdAccounts = new Set(['mercury', 'dolar app']);
+    const newMoneda = usdAccounts.has(account) ? 'USD' : (tx.moneda as 'COP' | 'USD');
     const updated: ParsedTransaction = {
       ...tx,
       cuenta: account,
       cuenta_tipo: tipoMap[account] || 'debito',
+      moneda: newMoneda,
     } as any;
     pending.delete(chatId);
     await ctx.answerCallbackQuery(`Cuenta: ${account}`);

@@ -354,6 +354,9 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   crm: { cat: 'Otros Ingresos', sub: 'Servicios CRM', tipo: 'income' },
   'blue box': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
   bluebox: { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
+  'classic metals': { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
+  'classic': { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
+  metals: { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
   migrantes: { cat: 'Otros Ingresos', sub: 'Proyecto Migrantes', tipo: 'income' },
 
   // Rentas y alquileres

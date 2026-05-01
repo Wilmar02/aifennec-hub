@@ -42,8 +42,19 @@ const ACCOUNT_PATTERNS: Record<string, { patterns: string[]; tipo: 'debito' | 'c
   'davivienda debito': { patterns: ['davivienda debito', 'cuenta ahorros davivienda'], tipo: 'debito' },
   davivienda: { patterns: ['davivienda'], tipo: 'ambiguo' },
   'dolar app': { patterns: ['dolar app', 'dolarapp', 'dolares', 'dollar app'], tipo: 'debito' },
+  mercury: { patterns: ['mercury', 'mercury bank', 'mercury usd'], tipo: 'debito' },
   efectivo: { patterns: ['efectivo', 'cash'], tipo: 'efectivo' },
 };
+
+/**
+ * Cuentas que operan en USD por default. Si la cuenta detectada/elegida está acá,
+ * el bot asume USD a menos que el texto indique otra moneda.
+ */
+const USD_ACCOUNTS = new Set(['mercury', 'dolar app']);
+
+export function isUsdAccount(account: string): boolean {
+  return USD_ACCOUNTS.has(account);
+}
 
 export interface AccountResult {
   account: string;
@@ -176,7 +187,7 @@ export function parseMessage(text: string): ParsedTransaction | null {
     cuenta_tipo: accountResult.tipo,
     fecha,
     mes,
-    moneda: 'COP',
+    moneda: (isUsdAccount(accountResult.account) || /\busd\b|\bdolares?\b/i.test(text)) ? 'USD' : 'COP',
     fuente: 'telegram',
     confidence,
   };
