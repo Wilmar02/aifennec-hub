@@ -3,7 +3,7 @@ import { InlineKeyboard } from 'grammy';
 import { env } from '../../infra/env.js';
 import { logger } from '../../infra/logger.js';
 import { parseMessage, getBogotaDate } from './parser.js';
-import { insertTransaction, resolveUserId, recentTransactions, monthAggregateByType } from './supabase.js';
+import { insertTransaction, resolveUserId, recentTransactions, monthAggregateByType, monthAggregateByCategoria, fetchPresupuestos } from './supabase.js';
 import type { ParsedTransaction, TransactionType } from './types.js';
 
 const TYPE_EMOJI: Record<TransactionType, string> = {
@@ -33,6 +33,40 @@ function isAuthorized(ctx: Context): boolean {
 
 function formatMoney(n: number): string {
   return `$${new Intl.NumberFormat('es-CO').format(Math.round(n))}`;
+}
+
+
+const CAT_EMOJI: Record<string, string> = {
+  Vivienda: '🏠',
+  Alimento: '🍎',
+  Transporte: '🚗',
+  Seguros: '🏥',
+  Educación: '📚',
+  Ahorro: '🏦',
+  'Viajes y Paseos': '✈️',
+  'Gastos Personales': '👤',
+  Inversiones: '📈',
+  Deudas: '💳',
+  Salario: '💼',
+  'Otros Ingresos': '💵',
+  'Rentas y Alquileres': '🏘️',
+  'Ingresos por Intereses': '📊',
+  Dividendos: '💎',
+};
+
+const CAT_ORDER = [
+  'Vivienda', 'Alimento', 'Transporte', 'Seguros', 'Educación',
+  'Ahorro', 'Viajes y Paseos', 'Gastos Personales', 'Inversiones', 'Deudas',
+];
+
+function compactMoney(n: number): string {
+  if (n === 0) return '$0';
+  if (Math.abs(n) >= 1_000_000) {
+    const v = n / 1_000_000;
+    return '$' + v.toFixed(v >= 10 ? 1 : 2).replace(/\.?0+$/, '') + 'M';
+  }
+  if (Math.abs(n) >= 1_000) return '$' + Math.round(n / 1000) + 'k';
+  return '$' + n;
 }
 
 const pending = new Map<number, ParsedTransaction & { _expires: number }>();
@@ -185,6 +219,67 @@ export function registerGastosCommands(bot: Bot): void {
     } catch (err) {
       logger.error({ err }, 'gastos: /balance failed');
       await ctx.reply('❌ Error calculando balance.');
+    }
+  });
+
+  bot.command('presupuesto', async (ctx) => {
+    if (!isAuthorized(ctx)) return;
+    const tgId = ctx.from?.id;
+    if (!tgId) return;
+    const userId = await resolveUserId(tgId);
+    if (!userId) {
+      await ctx.reply('Sin perfil vinculado.');
+      return;
+    }
+    try {
+      const { fecha, mes } = getBogotaDate();
+      const yyyymm = fecha.slice(0, 7);
+      const [gastos, presus] = await Promise.all([
+        monthAggregateByCategoria(userId, yyyymm),
+        fetchPresupuestos(userId),
+      ]);
+
+      // merge por categoría
+      const map = new Map<string, { presu: number; gastado: number }>();
+      for (const p of presus) map.set(p.categoria, { presu: p.presupuesto, gastado: 0 });
+      for (const g of gastos) {
+        // contar solo gastos reales (expense + savings + investment + debt_payment), no income
+        if (g.tipo_transaccion === 'income') continue;
+        const cur = map.get(g.categoria) ?? { presu: 0, gastado: 0 };
+        cur.gastado += g.total;
+        map.set(g.categoria, cur);
+      }
+
+      // ordenar por CAT_ORDER, después huérfanos al final
+      const orderIdx = (c: string) => {
+        const i = CAT_ORDER.indexOf(c);
+        return i === -1 ? 999 : i;
+      };
+      const rows = [...map.entries()].sort((a, b) => orderIdx(a[0]) - orderIdx(b[0]));
+
+      let totPresu = 0;
+      let totGasto = 0;
+      const lines: string[] = [`<b>📊 Presupuesto ${mes} ${yyyymm.slice(0, 4)}</b>`, ''];
+      for (const [cat, v] of rows) {
+        totPresu += v.presu;
+        totGasto += v.gastado;
+        const pct = v.presu > 0 ? Math.round((v.gastado / v.presu) * 100) : v.gastado > 0 ? 999 : 0;
+        const emoji = CAT_EMOJI[cat] ?? '•';
+        const pctTxt = v.presu === 0 && v.gastado === 0 ? '—' : pct === 999 ? 'sin presu' : `${pct}%`;
+        lines.push(`${emoji} <b>${cat}</b>  ${pctTxt} · ${compactMoney(v.gastado)} de ${compactMoney(v.presu)}`);
+      }
+
+      const totDisp = totPresu - totGasto;
+      const totPct = totPresu > 0 ? Math.round((totGasto / totPresu) * 100) : 0;
+      lines.push('');
+      lines.push('━━━━━━━━━━━━━━━━━━━━');
+      lines.push(`💰 <b>TOTAL:</b> ${compactMoney(totGasto)} de ${compactMoney(totPresu)} (${totPct}%)`);
+      lines.push(`✅ Disponible: <b>${compactMoney(totDisp)}</b>`);
+
+      await ctx.reply(lines.join('\n'), { parse_mode: 'HTML' });
+    } catch (err) {
+      logger.error({ err }, 'gastos: /presupuesto failed');
+      await ctx.reply('❌ Error calculando presupuesto.');
     }
   });
 

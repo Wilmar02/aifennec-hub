@@ -90,3 +90,45 @@ export async function monthAggregateByType(userId: string, yyyymm: string): Prom
   for (const r of rows) grouped.set(r.tipo_transaccion, (grouped.get(r.tipo_transaccion) ?? 0) + Number(r.Valor));
   return Array.from(grouped, ([tipo_transaccion, total]) => ({ tipo_transaccion, total }));
 }
+
+
+export interface CategoriaAgg {
+  categoria: string;
+  total: number;
+  tipo_transaccion: string;
+}
+
+/** Suma del mes (yyyy-MM) agrupada por categoría. */
+export async function monthAggregateByCategoria(userId: string, yyyymm: string): Promise<CategoriaAgg[]> {
+  const start = `${yyyymm}-01`;
+  const [y, m] = yyyymm.split('-').map(Number) as [number, number];
+  const lastDay = new Date(y, m, 0).getDate();
+  const end = `${yyyymm}-${String(lastDay).padStart(2, '0')}`;
+  const sel = 'categoria,tipo_transaccion,Valor';
+  const path = `${encodeURIComponent(TABLE)}?user_id=eq.${userId}&fecha=gte.${start}&fecha=lte.${end}&select=${sel}`;
+  const res = await fetch(url(path), { headers: headers() });
+  if (!res.ok) throw new Error(`supabase agg-cat: ${res.status} ${await res.text()}`);
+  const rows = (await res.json()) as { categoria: string; tipo_transaccion: string; Valor: number }[];
+  const grouped = new Map<string, { total: number; tipo: string }>();
+  for (const r of rows) {
+    const cur = grouped.get(r.categoria) ?? { total: 0, tipo: r.tipo_transaccion };
+    cur.total += Number(r.Valor);
+    grouped.set(r.categoria, cur);
+  }
+  return Array.from(grouped, ([categoria, v]) => ({ categoria, total: v.total, tipo_transaccion: v.tipo }));
+}
+
+export interface PresupuestoRow {
+  categoria: string;
+  presupuesto: number;
+  moneda: string;
+}
+
+/** Lista de presupuestos del usuario. */
+export async function fetchPresupuestos(userId: string, moneda = 'COP'): Promise<PresupuestoRow[]> {
+  const sel = 'categoria,presupuesto,moneda';
+  const path = `presupuestos?user_id=eq.${userId}&moneda=eq.${moneda}&select=${sel}`;
+  const res = await fetch(url(path), { headers: headers() });
+  if (!res.ok) throw new Error(`supabase presupuestos: ${res.status} ${await res.text()}`);
+  return (await res.json()) as PresupuestoRow[];
+}
