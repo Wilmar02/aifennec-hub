@@ -27,22 +27,40 @@ export function extractAmount(text: string): number | null {
   return null;
 }
 
-const ACCOUNT_PATTERNS: Record<string, string[]> = {
-  bancolombia: ['bancolombia', 'bancolom'],
-  nequi: ['nequi'],
-  daviplata: ['daviplata', 'davi plata'],
-  'nu colombia': ['nu ', 'nu colombia', 'nubank'],
-  efectivo: ['efectivo', 'cash', 'plata'],
-  'dolar app': ['dolar app', 'dolarapp', 'dolares'],
-  'davivienda credito': ['davivienda', 'credito davivienda'],
+/**
+ * Catálogo de cuentas. Cada entrada tiene patrones de match Y un flag tipo (debit/credit).
+ * Si la cuenta tiene ambos tipos (Bancolombia tiene débito y crédito), usar la versión
+ * más específica como key (`bancolombia debito` / `bancolombia credito`) y dejar la
+ * genérica `bancolombia` como fallback ambiguo (parser pregunta tipo).
+ */
+const ACCOUNT_PATTERNS: Record<string, { patterns: string[]; tipo: 'debito' | 'credito' | 'efectivo' | 'ambiguo' }> = {
+  'bancolombia debito': { patterns: ['bancolombia debito', 'bcol debito', 'cuenta ahorros bancolombia'], tipo: 'debito' },
+  'bancolombia credito': { patterns: ['bancolombia credito', 'tc bancolombia', 'tarjeta bancolombia'], tipo: 'credito' },
+  bancolombia: { patterns: ['bancolombia', 'bancolom'], tipo: 'ambiguo' },
+  nequi: { patterns: ['nequi'], tipo: 'debito' },
+  daviplata: { patterns: ['daviplata', 'davi plata'], tipo: 'debito' },
+  'nu colombia': { patterns: ['nu ', 'nu colombia', 'nubank', 'nucolombia'], tipo: 'credito' },
+  'davivienda credito': { patterns: ['davivienda credito', 'credito davivienda', 'tc davivienda'], tipo: 'credito' },
+  'davivienda debito': { patterns: ['davivienda debito', 'cuenta ahorros davivienda'], tipo: 'debito' },
+  davivienda: { patterns: ['davivienda'], tipo: 'ambiguo' },
+  'dolar app': { patterns: ['dolar app', 'dolarapp', 'dolares', 'dollar app'], tipo: 'debito' },
+  efectivo: { patterns: ['efectivo', 'cash'], tipo: 'efectivo' },
 };
 
-export function extractAccount(text: string): string {
+export interface AccountResult {
+  account: string;
+  tipo: 'debito' | 'credito' | 'efectivo' | 'ambiguo' | 'desconocido';
+}
+
+/** Detecta cuenta en el texto. Si no encuentra match, retorna 'desconocido' (no efectivo por default). */
+export function extractAccount(text: string): AccountResult {
   const lower = text.toLowerCase().normalize('NFD').replace(COMBINING_DIACRITICS, '');
-  for (const [account, patterns] of Object.entries(ACCOUNT_PATTERNS)) {
-    if (patterns.some((p) => lower.includes(p))) return account;
+  // Probar primero las versiones más específicas (multi-palabra)
+  const sortedEntries = Object.entries(ACCOUNT_PATTERNS).sort((a, b) => b[0].length - a[0].length);
+  for (const [account, { patterns, tipo }] of sortedEntries) {
+    if (patterns.some((p) => lower.includes(p))) return { account, tipo };
   }
-  return 'efectivo';
+  return { account: 'desconocido', tipo: 'desconocido' };
 }
 
 const INCOME_KEYWORDS = [
@@ -144,7 +162,7 @@ function cleanDescription(text: string): string {
 export function parseMessage(text: string): ParsedTransaction | null {
   const amount = extractAmount(text);
   if (!amount || amount <= 0) return null;
-  const account = extractAccount(text);
+  const accountResult = extractAccount(text);
   const typeDetection = detectTransactionType(text);
   const cat = categorize(text, typeDetection.type);
   const { fecha, mes } = getBogotaDate();
@@ -156,7 +174,8 @@ export function parseMessage(text: string): ParsedTransaction | null {
     tipo_transaccion: cat.tipo_transaccion,
     categoria: cat.categoria,
     subcategoria: cat.subcategoria,
-    cuenta: account,
+    cuenta: accountResult.account,
+    cuenta_tipo: accountResult.tipo,
     fecha,
     mes,
     moneda: 'COP',

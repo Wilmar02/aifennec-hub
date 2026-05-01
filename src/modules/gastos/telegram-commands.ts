@@ -82,20 +82,95 @@ setInterval(() => {
   for (const [k, v] of pending) if (now > v._expires) pending.delete(k);
 }, 60_000);
 
-async function sendConfirmation(ctx: Context, tx: ParsedTransaction): Promise<void> {
+/**
+ * Catálogo de cuentas disponibles para el inline keyboard.
+ * El callback pasa el nombre de la cuenta tras `cuenta:`.
+ */
+const ACCOUNT_OPTIONS = [
+  { label: '🏦 Bancolombia débito', value: 'bancolombia debito' },
+  { label: '💳 Bancolombia crédito', value: 'bancolombia credito' },
+  { label: '📱 Nequi', value: 'nequi' },
+  { label: '📲 Daviplata', value: 'daviplata' },
+  { label: '💳 Nu Colombia', value: 'nu colombia' },
+  { label: '💳 Davivienda crédito', value: 'davivienda credito' },
+  { label: '🏦 Davivienda débito', value: 'davivienda debito' },
+  { label: '💲 Dólar App', value: 'dolar app' },
+  { label: '💵 Efectivo', value: 'efectivo' },
+];
+
+/** Subset solo débito/crédito para resolver ambigüedad de Bancolombia/Davivienda */
+function ambiguousResolverOptions(baseAccount: string): { label: string; value: string }[] {
+  if (baseAccount === 'bancolombia') {
+    return [
+      { label: '🏦 Débito', value: 'bancolombia debito' },
+      { label: '💳 Crédito', value: 'bancolombia credito' },
+    ];
+  }
+  if (baseAccount === 'davivienda') {
+    return [
+      { label: '🏦 Débito', value: 'davivienda debito' },
+      { label: '💳 Crédito', value: 'davivienda credito' },
+    ];
+  }
+  return [];
+}
+
+async function sendAccountPicker(ctx: Context, tx: ParsedTransaction): Promise<void> {
   const chatId = ctx.chat!.id;
   pending.set(chatId, { ...tx, _expires: Date.now() + TTL });
   const emoji = TYPE_EMOJI[tx.tipo_transaccion];
+  const ambiguous = (tx as any).cuenta_tipo === 'ambiguo';
+  const opts = ambiguous ? ambiguousResolverOptions(tx.cuenta) : ACCOUNT_OPTIONS;
+  const titulo = ambiguous
+    ? `¿Es <b>${esc(tx.cuenta)}</b> débito o crédito?`
+    : `¿A qué cuenta ${tx.tipo_transaccion === 'income' ? 'llegó' : 'salió'}?`;
+
   const lines = [
     `${emoji} <b>${TYPE_LABEL[tx.tipo_transaccion]}: ${formatMoney(tx.Valor)} ${esc(tx.moneda)}</b>`,
     `📝 ${esc(tx.descripcion)}`,
     `🏷️ ${esc(tx.categoria)} → ${esc(tx.subcategoria)}`,
-    `💳 ${esc(tx.cuenta)}`,
+    '',
+    titulo,
+  ];
+
+  const kb = new InlineKeyboard();
+  opts.forEach((o, i) => {
+    kb.text(o.label, `cuenta:${o.value}`);
+    // 2 botones por fila
+    if (i % 2 === 1 || i === opts.length - 1) kb.row();
+  });
+  kb.text('❌ Cancelar', 'gasto:cancel');
+
+  await ctx.reply(lines.join('\n'), { parse_mode: 'HTML', reply_markup: kb });
+}
+
+async function sendConfirmation(ctx: Context, tx: ParsedTransaction): Promise<void> {
+  const chatId = ctx.chat!.id;
+  pending.set(chatId, { ...tx, _expires: Date.now() + TTL });
+  const emoji = TYPE_EMOJI[tx.tipo_transaccion];
+  const tipoCuenta = (tx as any).cuenta_tipo;
+  const tipoLabel = tipoCuenta === 'credito' ? ' (crédito)' : tipoCuenta === 'debito' ? ' (débito)' : '';
+
+  const lines = [
+    `${emoji} <b>${TYPE_LABEL[tx.tipo_transaccion]}: ${formatMoney(tx.Valor)} ${esc(tx.moneda)}</b>`,
+    `📝 ${esc(tx.descripcion)}`,
+    `🏷️ ${esc(tx.categoria)} → ${esc(tx.subcategoria)}`,
+    `💳 ${esc(tx.cuenta)}${tipoLabel}`,
     `📅 ${esc(tx.fecha)}`,
     `🎯 confianza: ${(tx.confidence * 100).toFixed(0)}%`,
   ];
   const kb = new InlineKeyboard().text('✅ Confirmar', 'gasto:ok').text('❌ Cancelar', 'gasto:cancel');
   await ctx.reply(lines.join('\n'), { parse_mode: 'HTML', reply_markup: kb });
+}
+
+/** Decide si pedir cuenta o ir directo a confirmación. */
+async function offerToUser(ctx: Context, tx: ParsedTransaction): Promise<void> {
+  const tipo = (tx as any).cuenta_tipo;
+  if (tipo === 'desconocido' || tipo === 'ambiguo') {
+    await sendAccountPicker(ctx, tx);
+  } else {
+    await sendConfirmation(ctx, tx);
+  }
 }
 
 async function persist(ctx: Context, tx: ParsedTransaction): Promise<void> {
@@ -109,6 +184,8 @@ async function persist(ctx: Context, tx: ParsedTransaction): Promise<void> {
     await ctx.reply('Tu telegram_id no está vinculado a un perfil en Supabase. Configúralo en el dashboard.');
     return;
   }
+  // El tipo (débito/crédito) viaja embebido en `cuenta` (e.g. 'bancolombia credito')
+  // así no necesitamos columna extra en Supabase.
   const result = await insertTransaction({
     user_id: userId,
     fecha: tx.fecha,
@@ -158,7 +235,7 @@ export function registerGastosCommands(bot: Bot): void {
       await ctx.reply('No detecté un monto. Ejemplo: <code>Almuerzo 45k nequi</code>', { parse_mode: 'HTML' });
       return;
     }
-    await sendConfirmation(ctx, parsed);
+    await offerToUser(ctx, parsed);
   });
 
   bot.command('gastos', async (ctx) => {
@@ -288,6 +365,43 @@ export function registerGastosCommands(bot: Bot): void {
     }
   });
 
+  // Callback de selección de cuenta — actualiza tx y muestra confirmación final
+  bot.callbackQuery(/^cuenta:(.+)$/, async (ctx) => {
+    if (!isAuthorized(ctx)) return;
+    const chatId = ctx.chat?.id;
+    if (!chatId) return;
+    const tx = pending.get(chatId);
+    if (!tx) {
+      await ctx.answerCallbackQuery('Expiró. Vuelve a enviar el mensaje.');
+      return;
+    }
+    const account = ctx.match![1];
+    const tipoMap: Record<string, 'debito' | 'credito' | 'efectivo'> = {
+      'bancolombia debito': 'debito',
+      'bancolombia credito': 'credito',
+      'davivienda debito': 'debito',
+      'davivienda credito': 'credito',
+      'nu colombia': 'credito',
+      nequi: 'debito',
+      daviplata: 'debito',
+      'dolar app': 'debito',
+      efectivo: 'efectivo',
+    };
+    const updated: ParsedTransaction = {
+      ...tx,
+      cuenta: account,
+      cuenta_tipo: tipoMap[account] || 'debito',
+    } as any;
+    pending.delete(chatId);
+    await ctx.answerCallbackQuery(`Cuenta: ${account}`);
+    try {
+      await ctx.editMessageReplyMarkup({ reply_markup: undefined });
+    } catch {
+      // ignora si ya no se puede editar
+    }
+    await sendConfirmation(ctx, updated);
+  });
+
   bot.callbackQuery('gasto:ok', async (ctx) => {
     if (!isAuthorized(ctx)) return;
     const chatId = ctx.chat?.id;
@@ -326,6 +440,6 @@ export function registerGastosCommands(bot: Bot): void {
     if (text.startsWith('/')) return;
     const parsed = parseMessage(text);
     if (!parsed) return; // silencio si no parece transacción
-    await sendConfirmation(ctx, parsed);
+    await offerToUser(ctx, parsed);
   });
 }

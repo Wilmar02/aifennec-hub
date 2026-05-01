@@ -298,37 +298,60 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'ahorro hipoteca': { cat: 'Ahorro', sub: 'Hipoteca', tipo: 'savings' },
 
   // ============================================================
-  // INGRESOS (Salario, Otros, Rentas, Intereses, Dividendos)
+  // INGRESOS — subcategorías idénticas a las del Excel (Salario sheet INICIO)
   // ============================================================
-  salario: { cat: 'Salario', sub: 'Salario', tipo: 'income' },
-  sueldo: { cat: 'Salario', sub: 'Salario', tipo: 'income' },
-  nomina: { cat: 'Salario', sub: 'Salario', tipo: 'income' },
-  quincena: { cat: 'Salario', sub: 'Salario', tipo: 'income' },
+  // Salario (formal, prestaciones de ley)
+  nomina: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
+  salario: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
+  sueldo: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
+  quincena: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
+  bonificacion: { cat: 'Salario', sub: 'Bonificaciones', tipo: 'income' },
+  bonificaciones: { cat: 'Salario', sub: 'Bonificaciones', tipo: 'income' },
+  bono: { cat: 'Salario', sub: 'Bonificaciones', tipo: 'income' },
+  comision: { cat: 'Salario', sub: 'Comisiones', tipo: 'income' },
+  comisiones: { cat: 'Salario', sub: 'Comisiones', tipo: 'income' },
   prima: { cat: 'Salario', sub: 'Prima', tipo: 'income' },
   cesantias: { cat: 'Salario', sub: 'Cesantías', tipo: 'income' },
+  'auxilio transporte': { cat: 'Salario', sub: 'Auxilio de transporte', tipo: 'income' },
+  viaticos: { cat: 'Salario', sub: 'Viáticos', tipo: 'income' },
+  vacaciones: { cat: 'Salario', sub: 'Vacaciones', tipo: 'income' },
+
+  // Otros Ingresos (extras, freelance, vendors específicos)
   'ingreso extra': { cat: 'Otros Ingresos', sub: 'Ingresos Extra', tipo: 'income' },
   'ingresos extra': { cat: 'Otros Ingresos', sub: 'Ingresos Extra', tipo: 'income' },
   freelance: { cat: 'Otros Ingresos', sub: 'Freelance', tipo: 'income' },
   honorarios: { cat: 'Otros Ingresos', sub: 'Freelance', tipo: 'income' },
-  'miami viral': { cat: 'Otros Ingresos', sub: 'Miami Viral', tipo: 'income' },
-  yenny: { cat: 'Otros Ingresos', sub: 'Yenny GHL', tipo: 'income' },
-  'closer luna': { cat: 'Otros Ingresos', sub: 'Closer Luna', tipo: 'income' },
-  ghl: { cat: 'Otros Ingresos', sub: 'CRM clientes', tipo: 'income' },
-  crm: { cat: 'Otros Ingresos', sub: 'CRM clientes', tipo: 'income' },
+  consultoria: { cat: 'Otros Ingresos', sub: 'Freelance', tipo: 'income' },
+  reembolso: { cat: 'Otros Ingresos', sub: 'Reembolsos', tipo: 'income' },
+  reembolsos: { cat: 'Otros Ingresos', sub: 'Reembolsos', tipo: 'income' },
+  premio: { cat: 'Otros Ingresos', sub: 'Premios', tipo: 'income' },
+  loteria: { cat: 'Otros Ingresos', sub: 'Premios', tipo: 'income' },
+  // Vendors / clientes específicos (subcategoría = nombre vendor, NO 'Jose' a secas)
+  'miami viral': { cat: 'Otros Ingresos', sub: 'Cliente Miami Viral', tipo: 'income' },
+  yenny: { cat: 'Otros Ingresos', sub: 'Cliente Yenny', tipo: 'income' },
+  'agencia bio': { cat: 'Otros Ingresos', sub: 'Cliente Yenny', tipo: 'income' },
+  'closer luna': { cat: 'Otros Ingresos', sub: 'Cliente Closer Luna', tipo: 'income' },
+  ghl: { cat: 'Otros Ingresos', sub: 'Servicios CRM', tipo: 'income' },
+  crm: { cat: 'Otros Ingresos', sub: 'Servicios CRM', tipo: 'income' },
+  'blue box': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
+  bluebox: { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
+  migrantes: { cat: 'Otros Ingresos', sub: 'Proyecto Migrantes', tipo: 'income' },
+
+  // Rentas y alquileres
   rentas: { cat: 'Rentas y Alquileres', sub: 'Rentas y Alquileres', tipo: 'income' },
   alquiler: { cat: 'Rentas y Alquileres', sub: 'Rentas y Alquileres', tipo: 'income' },
   'arriendo cobrado': { cat: 'Rentas y Alquileres', sub: 'Rentas y Alquileres', tipo: 'income' },
+
+  // Intereses / Dividendos
   intereses: { cat: 'Ingresos por Intereses', sub: 'Intereses', tipo: 'income' },
   rendimientos: { cat: 'Ingresos por Intereses', sub: 'Intereses', tipo: 'income' },
   dividendos: { cat: 'Dividendos', sub: 'Dividendos', tipo: 'income' },
   dividendo: { cat: 'Dividendos', sub: 'Dividendos', tipo: 'income' },
-  'blue box': { cat: 'Otros Ingresos', sub: 'Blue Box', tipo: 'income' },
-  bluebox: { cat: 'Otros Ingresos', sub: 'Blue Box', tipo: 'income' },
-  'agencia bio': { cat: 'Otros Ingresos', sub: 'Yenny GHL', tipo: 'income' },
-  'pago jose': { cat: 'Otros Ingresos', sub: 'Jose', tipo: 'income' },
-  'ingreso jose': { cat: 'Otros Ingresos', sub: 'Jose', tipo: 'income' },
-  migrantes: { cat: 'Otros Ingresos', sub: 'Migrantes', tipo: 'income' },
+
+  // Deudas a personas
   'pago angela': { cat: 'Deudas', sub: 'Préstamo Ángela', tipo: 'debt_payment' },
+  // Nota: "pago jose" / "ingreso jose" REMOVIDO — el contexto debe definir el sub
+  // (nómina/honorarios/etc.) en lugar de mapear por nombre de persona.
 
 };
 
