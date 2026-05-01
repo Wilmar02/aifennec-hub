@@ -15,11 +15,24 @@ function headers(extra: Record<string, string> = {}): Record<string, string> {
   };
 }
 
+const FETCH_TIMEOUT_MS = 10_000;
+
+/** fetch con AbortController para que un Supabase colgado no bloquee el comando. */
+async function fetchTo(input: string, init: RequestInit = {}): Promise<Response> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 let cachedOwnerId: string | null = null;
 
 /** Resuelve user_id en `perfiles` por telegram_id. Cae a OWNER_TELEGRAM_ID si no encuentra. */
 export async function resolveUserId(telegramId: number): Promise<string | null> {
-  const direct = await fetch(
+  const direct = await fetchTo(
     url(`perfiles?telegram_id=eq.${encodeURIComponent(String(telegramId))}&select=id&limit=1`),
     { headers: headers() }
   );
@@ -29,7 +42,7 @@ export async function resolveUserId(telegramId: number): Promise<string | null> 
   }
   if (cachedOwnerId) return cachedOwnerId;
   const ownerTgId = env.TELEGRAM_DIGEST_CHAT_ID;
-  const owner = await fetch(
+  const owner = await fetchTo(
     url(`perfiles?telegram_id=eq.${encodeURIComponent(ownerTgId)}&select=id&limit=1`),
     { headers: headers() }
   );
@@ -41,7 +54,7 @@ export async function resolveUserId(telegramId: number): Promise<string | null> 
 }
 
 export async function insertTransaction(row: Record<string, unknown>): Promise<{ ok: true } | { ok: false; error: string }> {
-  const res = await fetch(url(encodeURIComponent(TABLE)), {
+  const res = await fetchTo(url(encodeURIComponent(TABLE)), {
     method: 'POST',
     headers: headers({ Prefer: 'return=minimal' }),
     body: JSON.stringify([row]),
@@ -65,7 +78,7 @@ export interface TxRow {
 export async function recentTransactions(userId: string, limit = 10): Promise<TxRow[]> {
   const sel = 'id,fecha,descripcion,Valor,tipo_transaccion,categoria,cuenta,moneda';
   const path = `${encodeURIComponent(TABLE)}?user_id=eq.${userId}&select=${sel}&order=fecha.desc,id.desc&limit=${limit}`;
-  const res = await fetch(url(path), { headers: headers() });
+  const res = await fetchTo(url(path), { headers: headers() });
   if (!res.ok) throw new Error(`supabase recent: ${res.status} ${await res.text()}`);
   return (await res.json()) as TxRow[];
 }
@@ -83,7 +96,7 @@ export async function monthAggregateByType(userId: string, yyyymm: string): Prom
   const end = `${yyyymm}-${String(lastDay).padStart(2, '0')}`;
   const sel = 'tipo_transaccion,Valor';
   const path = `${encodeURIComponent(TABLE)}?user_id=eq.${userId}&fecha=gte.${start}&fecha=lte.${end}&select=${sel}`;
-  const res = await fetch(url(path), { headers: headers() });
+  const res = await fetchTo(url(path), { headers: headers() });
   if (!res.ok) throw new Error(`supabase aggregate: ${res.status} ${await res.text()}`);
   const rows = (await res.json()) as { tipo_transaccion: string; Valor: number }[];
   const grouped = new Map<string, number>();
@@ -106,7 +119,7 @@ export async function monthAggregateByCategoria(userId: string, yyyymm: string):
   const end = `${yyyymm}-${String(lastDay).padStart(2, '0')}`;
   const sel = 'categoria,tipo_transaccion,Valor';
   const path = `${encodeURIComponent(TABLE)}?user_id=eq.${userId}&fecha=gte.${start}&fecha=lte.${end}&select=${sel}`;
-  const res = await fetch(url(path), { headers: headers() });
+  const res = await fetchTo(url(path), { headers: headers() });
   if (!res.ok) throw new Error(`supabase agg-cat: ${res.status} ${await res.text()}`);
   const rows = (await res.json()) as { categoria: string; tipo_transaccion: string; Valor: number }[];
   const grouped = new Map<string, { total: number; tipo: string }>();
@@ -128,7 +141,7 @@ export interface PresupuestoRow {
 export async function fetchPresupuestos(userId: string, moneda = 'COP'): Promise<PresupuestoRow[]> {
   const sel = 'categoria,presupuesto,moneda';
   const path = `presupuestos?user_id=eq.${userId}&moneda=eq.${moneda}&select=${sel}`;
-  const res = await fetch(url(path), { headers: headers() });
+  const res = await fetchTo(url(path), { headers: headers() });
   if (!res.ok) throw new Error(`supabase presupuestos: ${res.status} ${await res.text()}`);
   return (await res.json()) as PresupuestoRow[];
 }

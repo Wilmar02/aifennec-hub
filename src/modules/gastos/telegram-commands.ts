@@ -35,6 +35,11 @@ function formatMoney(n: number): string {
   return `$${new Intl.NumberFormat('es-CO').format(Math.round(n))}`;
 }
 
+/** Escapa caracteres reservados de Telegram HTML para evitar parse errors / injection. */
+function esc(s: string | number | null | undefined): string {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 
 const CAT_EMOJI: Record<string, string> = {
   Vivienda: '🏠',
@@ -82,11 +87,11 @@ async function sendConfirmation(ctx: Context, tx: ParsedTransaction): Promise<vo
   pending.set(chatId, { ...tx, _expires: Date.now() + TTL });
   const emoji = TYPE_EMOJI[tx.tipo_transaccion];
   const lines = [
-    `${emoji} <b>${TYPE_LABEL[tx.tipo_transaccion]}: ${formatMoney(tx.Valor)} ${tx.moneda}</b>`,
-    `📝 ${tx.descripcion}`,
-    `🏷️ ${tx.categoria} → ${tx.subcategoria}`,
-    `💳 ${tx.cuenta}`,
-    `📅 ${tx.fecha}`,
+    `${emoji} <b>${TYPE_LABEL[tx.tipo_transaccion]}: ${formatMoney(tx.Valor)} ${esc(tx.moneda)}</b>`,
+    `📝 ${esc(tx.descripcion)}`,
+    `🏷️ ${esc(tx.categoria)} → ${esc(tx.subcategoria)}`,
+    `💳 ${esc(tx.cuenta)}`,
+    `📅 ${esc(tx.fecha)}`,
     `🎯 confianza: ${(tx.confidence * 100).toFixed(0)}%`,
   ];
   const kb = new InlineKeyboard().text('✅ Confirmar', 'gasto:ok').text('❌ Cancelar', 'gasto:cancel');
@@ -124,7 +129,7 @@ async function persist(ctx: Context, tx: ParsedTransaction): Promise<void> {
   }
   const emoji = TYPE_EMOJI[tx.tipo_transaccion];
   await ctx.reply(
-    `${emoji} Registrado: <b>${formatMoney(tx.Valor)} ${tx.moneda}</b>\n${tx.categoria} → ${tx.subcategoria}`,
+    `${emoji} Registrado: <b>${formatMoney(tx.Valor)} ${esc(tx.moneda)}</b>\n${esc(tx.categoria)} → ${esc(tx.subcategoria)}`,
     { parse_mode: 'HTML' }
   );
 }
@@ -173,7 +178,7 @@ export function registerGastosCommands(bot: Bot): void {
       }
       const lines = rows.map((r) => {
         const e = TYPE_EMOJI[(r.tipo_transaccion as TransactionType) ?? 'expense'] ?? '•';
-        return `${e} ${r.fecha} · ${formatMoney(Number(r.Valor))} ${r.moneda} · ${r.categoria} · <i>${r.descripcion}</i>`;
+        return `${e} ${esc(r.fecha)} · ${formatMoney(Number(r.Valor))} ${esc(r.moneda)} · ${esc(r.categoria)} · <i>${esc(r.descripcion)}</i>`;
       });
       await ctx.reply(['<b>Últimos 10 movimientos:</b>', '', ...lines].join('\n'), { parse_mode: 'HTML' });
     } catch (err) {

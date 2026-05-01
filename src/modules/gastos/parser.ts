@@ -86,9 +86,16 @@ export function categorize(
   typeHint?: TransactionType
 ): { categoria: string; subcategoria: string; tipo_transaccion: TransactionType; confidence: number } {
   const normalized = normalize(text);
+  const tokens = new Set(normalized.split(/\s+/).filter(Boolean));
   const sortedMappings = Object.entries(CUSTOM_MAPPINGS).sort((a, b) => b[0].length - a[0].length);
   for (const [keyword, mapping] of sortedMappings) {
-    if (normalized.includes(normalize(keyword))) {
+    const k = normalize(keyword);
+    // Multi-word keyword: substring match (e.g. "abono a capital", "comida de perro")
+    // Single-word keyword: exact token match to evitar falsos positivos
+    // (p.ej. "gas" no debe matchear "gasto", "pan" no debe matchear "pantalón").
+    const isMulti = k.includes(' ');
+    const matched = isMulti ? normalized.includes(k) : tokens.has(k);
+    if (matched) {
       return {
         categoria: mapping.cat,
         subcategoria: mapping.sub,
