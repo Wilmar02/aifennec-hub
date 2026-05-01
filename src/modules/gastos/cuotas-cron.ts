@@ -1,6 +1,6 @@
 import { env } from '../../infra/env.js';
 import { logger } from '../../infra/logger.js';
-import { fetchCreditos, resolveUserId } from './supabase.js';
+import { fetchCreditos, getOwnerUserId } from './supabase.js';
 
 function formatMoney(n: number): string {
   return `$${new Intl.NumberFormat('es-CO').format(Math.round(n))}`;
@@ -35,8 +35,7 @@ async function sendTelegramHTML(chatId: string, text: string): Promise<void> {
  * Job mensual (día 1, 8 AM Bogotá): resumen de las cuotas que vencen este mes.
  */
 export async function runCuotasResumenMensual(): Promise<void> {
-  const ownerTgId = Number(env.TELEGRAM_DIGEST_CHAT_ID);
-  const userId = await resolveUserId(ownerTgId);
+  const userId = await getOwnerUserId();
   if (!userId) {
     logger.warn('cuotas-cron: no userId for owner');
     return;
@@ -81,8 +80,7 @@ export async function runCuotasResumenMensual(): Promise<void> {
  * Job diario (8 AM Bogotá): recordatorio si hay cuota que vence en 3 días.
  */
 export async function runCuotasRecordatorioDiario(): Promise<void> {
-  const ownerTgId = Number(env.TELEGRAM_DIGEST_CHAT_ID);
-  const userId = await resolveUserId(ownerTgId);
+  const userId = await getOwnerUserId();
   if (!userId) return;
   const creditos = await fetchCreditos(userId);
   if (creditos.length === 0) return;

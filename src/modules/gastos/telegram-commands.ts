@@ -22,13 +22,22 @@ const TYPE_LABEL: Record<TransactionType, string> = {
   debt_payment: 'Pago deuda',
 };
 
+/**
+ * Autoriza por `from.id` (no por `chat.id`). Esto evita que en grupos cualquier
+ * miembro pueda usar el bot solo porque el chat está en allowlist.
+ */
 function isAuthorized(ctx: Context): boolean {
   const list = env.ALLOWED_TELEGRAM_IDS.split(',')
     .map((s) => s.trim())
     .filter(Boolean);
   const allowed = list.length > 0 ? list : [env.TELEGRAM_DIGEST_CHAT_ID];
-  const id = String(ctx.chat?.id ?? '');
-  return allowed.includes(id);
+  const fromId = String(ctx.from?.id ?? '');
+  return allowed.includes(fromId);
+}
+
+/** Key para el Map `pending`: combina chat + user para no pisar flujos en groups. */
+function pendingKey(ctx: Context): string {
+  return `${ctx.chat?.id ?? 'nochat'}:${ctx.from?.id ?? 'nofrom'}`;
 }
 
 function formatMoney(n: number): string {
@@ -74,7 +83,7 @@ function compactMoney(n: number): string {
   return '$' + n;
 }
 
-const pending = new Map<number, ParsedTransaction & { _expires: number }>();
+const pending = new Map<string, ParsedTransaction & { _expires: number }>();
 const TTL = 10 * 60 * 1000;
 
 setInterval(() => {
@@ -116,7 +125,7 @@ function ambiguousResolverOptions(baseAccount: string): { label: string; value: 
 
 async function sendAccountPicker(ctx: Context, tx: ParsedTransaction): Promise<void> {
   const chatId = ctx.chat!.id;
-  pending.set(chatId, { ...tx, _expires: Date.now() + TTL });
+  pending.set(pendingKey(ctx), { ...tx, _expires: Date.now() + TTL });
   const emoji = TYPE_EMOJI[tx.tipo_transaccion];
   const ambiguous = (tx as any).cuenta_tipo === 'ambiguo';
   const opts = ambiguous ? ambiguousResolverOptions(tx.cuenta) : ACCOUNT_OPTIONS;
@@ -145,7 +154,7 @@ async function sendAccountPicker(ctx: Context, tx: ParsedTransaction): Promise<v
 
 async function sendConfirmation(ctx: Context, tx: ParsedTransaction): Promise<void> {
   const chatId = ctx.chat!.id;
-  pending.set(chatId, { ...tx, _expires: Date.now() + TTL });
+  pending.set(pendingKey(ctx), { ...tx, _expires: Date.now() + TTL });
   const emoji = TYPE_EMOJI[tx.tipo_transaccion];
   const tipoCuenta = (tx as any).cuenta_tipo;
   const tipoLabel = tipoCuenta === 'credito' ? ' (crédito)' : tipoCuenta === 'debito' ? ' (débito)' : '';
@@ -436,7 +445,7 @@ export function registerGastosCommands(bot: Bot): void {
     if (!isAuthorized(ctx)) return;
     const chatId = ctx.chat?.id;
     if (!chatId) return;
-    const tx = pending.get(chatId);
+    const tx = pending.get(pendingKey(ctx));
     if (!tx) {
       await ctx.answerCallbackQuery('Expiró. Vuelve a enviar el mensaje.');
       return;
@@ -461,7 +470,7 @@ export function registerGastosCommands(bot: Bot): void {
       cuenta_tipo: tipoMap[account] || 'debito',
       moneda: newMoneda,
     } as any;
-    pending.delete(chatId);
+    pending.delete(pendingKey(ctx));
     await ctx.answerCallbackQuery(`Cuenta: ${account}`);
     try {
       await ctx.editMessageReplyMarkup({ reply_markup: undefined });
@@ -475,12 +484,12 @@ export function registerGastosCommands(bot: Bot): void {
     if (!isAuthorized(ctx)) return;
     const chatId = ctx.chat?.id;
     if (!chatId) return;
-    const tx = pending.get(chatId);
+    const tx = pending.get(pendingKey(ctx));
     if (!tx) {
       await ctx.answerCallbackQuery('Expiró. Vuelve a enviar el mensaje.');
       return;
     }
-    pending.delete(chatId);
+    pending.delete(pendingKey(ctx));
     await ctx.answerCallbackQuery('Guardando...');
     try {
       await ctx.editMessageReplyMarkup({ reply_markup: undefined });
@@ -493,7 +502,7 @@ export function registerGastosCommands(bot: Bot): void {
   bot.callbackQuery('gasto:cancel', async (ctx) => {
     if (!isAuthorized(ctx)) return;
     const chatId = ctx.chat?.id;
-    if (chatId) pending.delete(chatId);
+    if (chatId) pending.delete(pendingKey(ctx));
     await ctx.answerCallbackQuery('Cancelado');
     try {
       await ctx.editMessageText('❌ Cancelado.');

@@ -30,7 +30,13 @@ async function fetchTo(input: string, init: RequestInit = {}): Promise<Response>
 
 let cachedOwnerId: string | null = null;
 
-/** Resuelve user_id en `perfiles` por telegram_id. Cae a OWNER_TELEGRAM_ID si no encuentra. */
+/**
+ * Resuelve user_id en `perfiles` por telegram_id. Si no encuentra, retorna null.
+ * NO cae a OWNER por defecto — eso era un riesgo de seguridad para mensajes humanos
+ * (usuario random en chat allowlist quedaba imputado al owner).
+ *
+ * Para crons / código no-interactivo que necesite el owner, usar `getOwnerUserId()`.
+ */
 export async function resolveUserId(telegramId: number): Promise<string | null> {
   const direct = await fetchTo(
     url(`perfiles?telegram_id=eq.${encodeURIComponent(String(telegramId))}&select=id&limit=1`),
@@ -40,6 +46,11 @@ export async function resolveUserId(telegramId: number): Promise<string | null> 
     const rows = (await direct.json()) as { id: string }[];
     if (rows[0]?.id) return rows[0].id;
   }
+  return null;
+}
+
+/** Devuelve el user_id del OWNER (env.TELEGRAM_DIGEST_CHAT_ID). Cacheado. Solo para crons. */
+export async function getOwnerUserId(): Promise<string | null> {
   if (cachedOwnerId) return cachedOwnerId;
   const ownerTgId = env.TELEGRAM_DIGEST_CHAT_ID;
   const owner = await fetchTo(
