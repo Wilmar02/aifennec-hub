@@ -200,10 +200,27 @@ export async function fetchCreditoBySubcat(userId: string, subcategoria: string)
 }
 
 /**
- * Aplica un pago a un crédito: descuenta `amount` del saldo_actual e incrementa cuotas_pagadas.
- * Retorna el nuevo saldo, o null si la tabla no existe / no se encontró el crédito.
+ * Aplica un pago a un crédito ATÓMICAMENTE via RPC Postgres.
+ * Resuelve la race condition de "leer + modificar + escribir" cuando llegan
+ * múltiples abonos en paralelo. La función SQL hace el UPDATE en una sola query.
+ *
+ * Si el crédito no existe / la RPC falla, hace fallback al método read-modify-write
+ * para preservar funcionamiento (graceful degradation).
  */
 export async function applyPaymentToCredito(userId: string, subcategoria: string, amount: number): Promise<{ newSaldo: number; nombre: string } | null> {
+  // Intento 1: RPC atómica
+  const rpcRes = await fetchTo(url('rpc/apply_payment_to_credito'), {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ p_user_id: userId, p_subcategoria: subcategoria, p_amount: amount }),
+  });
+  if (rpcRes.ok) {
+    const rows = (await rpcRes.json()) as Array<{ saldo_actual: number; nombre: string }>;
+    if (rows[0]) return { newSaldo: Number(rows[0].saldo_actual), nombre: rows[0].nombre };
+    // Sin filas devueltas = no había crédito matcheando — está bien, no es error
+    return null;
+  }
+  // Intento 2: fallback (RPC no existe aún o falló)
   const credito = await fetchCreditoBySubcat(userId, subcategoria);
   if (!credito) return null;
   const newSaldo = Math.max(0, credito.saldo_actual - amount);
