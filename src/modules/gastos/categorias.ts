@@ -328,7 +328,6 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'pago jose': { cat: 'Otros Ingresos', sub: 'Jose', tipo: 'income' },
   'ingreso jose': { cat: 'Otros Ingresos', sub: 'Jose', tipo: 'income' },
   migrantes: { cat: 'Otros Ingresos', sub: 'Migrantes', tipo: 'income' },
-  ingreso: { cat: 'Otros Ingresos', sub: 'Otros', tipo: 'income' },
   'pago angela': { cat: 'Deudas', sub: 'Préstamo Ángela', tipo: 'debt_payment' },
 
 };

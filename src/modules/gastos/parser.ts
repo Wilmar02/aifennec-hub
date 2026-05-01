@@ -12,6 +12,9 @@ export function extractAmount(text: string): number | null {
   const milMatch = clean.match(/(\d+(?:[.,]\d+)?)\s*mil\b/i);
   if (milMatch) return parseFloat(milMatch[1]!.replace(',', '.')) * 1000;
 
+
+  const mMatch = clean.match(/(\d+(?:[.,]\d+)?)\s*m\b/i);
+  if (mMatch) return parseFloat(mMatch[1]!.replace(',', '.')) * 1000000;
   const bigMatch = clean.match(/(\d{1,3}(?:[.,]\d{3})+)/);
   if (bigMatch) return parseInt(bigMatch[1]!.replace(/[.,]/g, ''), 10);
 
