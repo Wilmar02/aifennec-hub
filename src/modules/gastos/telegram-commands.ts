@@ -3,7 +3,7 @@ import { InlineKeyboard } from 'grammy';
 import { env } from '../../infra/env.js';
 import { logger } from '../../infra/logger.js';
 import { parseMessage, getBogotaDate } from './parser.js';
-import { insertTransaction, resolveUserId, recentTransactions, monthAggregateByType, monthAggregateByCategoria, fetchPresupuestos } from './supabase.js';
+import { insertTransaction, resolveUserId, recentTransactions, monthAggregateByType, monthAggregateByCategoria, fetchPresupuestos, fetchCreditos, applyPaymentToCredito } from './supabase.js';
 import type { ParsedTransaction, TransactionType } from './types.js';
 
 const TYPE_EMOJI: Record<TransactionType, string> = {
@@ -205,10 +205,27 @@ async function persist(ctx: Context, tx: ParsedTransaction): Promise<void> {
     return;
   }
   const emoji = TYPE_EMOJI[tx.tipo_transaccion];
-  await ctx.reply(
-    `${emoji} Registrado: <b>${formatMoney(tx.Valor)} ${esc(tx.moneda)}</b>\n${esc(tx.categoria)} → ${esc(tx.subcategoria)}`,
-    { parse_mode: 'HTML' }
-  );
+  const lines = [
+    `${emoji} Registrado: <b>${formatMoney(tx.Valor)} ${esc(tx.moneda)}</b>`,
+    `${esc(tx.categoria)} → ${esc(tx.subcategoria)}`,
+  ];
+
+  // Si es pago de deuda, descontar del crédito vivo (si existe)
+  if (tx.tipo_transaccion === 'debt_payment' && tx.subcategoria) {
+    try {
+      const upd = await applyPaymentToCredito(userId, tx.subcategoria, tx.Valor);
+      if (upd) {
+        lines.push('');
+        lines.push(`💳 ${esc(upd.nombre)}`);
+        lines.push(`Saldo nuevo: <b>${formatMoney(upd.newSaldo)}</b>`);
+        if (upd.newSaldo === 0) lines.push('🎉 ¡Crédito cancelado!');
+      }
+    } catch (err) {
+      logger.warn({ err, sub: tx.subcategoria }, 'gastos: no se pudo actualizar crédito');
+    }
+  }
+
+  await ctx.reply(lines.join('\n'), { parse_mode: 'HTML' });
 }
 
 export function registerGastosCommands(bot: Bot): void {
@@ -301,6 +318,56 @@ export function registerGastosCommands(bot: Bot): void {
     } catch (err) {
       logger.error({ err }, 'gastos: /balance failed');
       await ctx.reply('❌ Error calculando balance.');
+    }
+  });
+
+  bot.command('deudas', async (ctx) => {
+    if (!isAuthorized(ctx)) return;
+    const tgId = ctx.from?.id;
+    if (!tgId) return;
+    const userId = await resolveUserId(tgId);
+    if (!userId) {
+      await ctx.reply('Sin perfil vinculado.');
+      return;
+    }
+    try {
+      const creditos = await fetchCreditos(userId);
+      if (creditos.length === 0) {
+        await ctx.reply('Sin créditos registrados. Para activar este reporte, creá la tabla <code>creditos</code> en Supabase.', { parse_mode: 'HTML' });
+        return;
+      }
+
+      const lines: string[] = ['<b>💳 Tus créditos vivos</b>', ''];
+      let totalSaldo = 0;
+      let totalCuota = 0;
+      for (const c of creditos) {
+        totalSaldo += Number(c.saldo_actual);
+        totalCuota += Number(c.cuota_mensual ?? 0);
+        const pctPagado = c.monto_inicial > 0 ? Math.round(((c.monto_inicial - c.saldo_actual) / c.monto_inicial) * 100) : 0;
+        const cuotasRestantes = c.cuotas_totales != null && c.cuotas_pagadas != null
+          ? c.cuotas_totales - c.cuotas_pagadas
+          : null;
+
+        lines.push(`<b>${esc(c.nombre)}</b>`);
+        lines.push(`Saldo: <b>${formatMoney(c.saldo_actual)}</b> de ${formatMoney(c.monto_inicial)}  (${pctPagado}% pagado)`);
+        if (c.cuota_mensual) {
+          const cuotaTxt = cuotasRestantes != null
+            ? `${formatMoney(c.cuota_mensual)}/mes · ${cuotasRestantes} cuotas restantes`
+            : `${formatMoney(c.cuota_mensual)}/mes`;
+          lines.push(`Cuota: ${cuotaTxt}`);
+        }
+        if (c.tasa_anual) lines.push(`Tasa: ${c.tasa_anual}% E.A.`);
+        lines.push('');
+      }
+
+      lines.push('━━━━━━━━━━━━━━━━━━━━');
+      lines.push(`💰 <b>Total deuda:</b> ${formatMoney(totalSaldo)}`);
+      lines.push(`📅 <b>Cuotas/mes:</b> ${formatMoney(totalCuota)}`);
+
+      await ctx.reply(lines.join('\n'), { parse_mode: 'HTML' });
+    } catch (err) {
+      logger.error({ err }, 'gastos: /deudas failed');
+      await ctx.reply('❌ Error consultando créditos.');
     }
   });
 

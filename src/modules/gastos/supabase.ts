@@ -145,3 +145,64 @@ export async function fetchPresupuestos(userId: string, moneda = 'COP'): Promise
   if (!res.ok) throw new Error(`supabase presupuestos: ${res.status} ${await res.text()}`);
   return (await res.json()) as PresupuestoRow[];
 }
+
+// ============================================================
+// CRÉDITOS — saldo vivo de hipoteca, vehículo, tarjetas
+// ============================================================
+
+export interface CreditoRow {
+  id: number;
+  subcategoria: string;
+  nombre: string;
+  monto_inicial: number;
+  saldo_actual: number;
+  cuota_mensual: number | null;
+  tasa_anual: number | null;
+  fecha_apertura: string | null;
+  fecha_fin_estimada: string | null;
+  cuotas_totales: number | null;
+  cuotas_pagadas: number | null;
+  activo: boolean;
+}
+
+/** Lista los créditos activos del usuario, ordenados por saldo descendente. */
+export async function fetchCreditos(userId: string): Promise<CreditoRow[]> {
+  const sel = 'id,subcategoria,nombre,monto_inicial,saldo_actual,cuota_mensual,tasa_anual,fecha_apertura,fecha_fin_estimada,cuotas_totales,cuotas_pagadas,activo';
+  const path = `creditos?user_id=eq.${userId}&activo=eq.true&select=${sel}&order=saldo_actual.desc`;
+  const res = await fetchTo(url(path), { headers: headers() });
+  if (!res.ok) {
+    // Si la tabla no existe, devolvemos array vacío (graceful degradation)
+    if (res.status === 404 || res.status === 400) return [];
+    throw new Error(`supabase creditos: ${res.status} ${await res.text()}`);
+  }
+  return (await res.json()) as CreditoRow[];
+}
+
+/** Busca un crédito específico por subcategoría. */
+export async function fetchCreditoBySubcat(userId: string, subcategoria: string): Promise<CreditoRow | null> {
+  const sel = 'id,subcategoria,nombre,monto_inicial,saldo_actual,cuota_mensual,tasa_anual,fecha_apertura,fecha_fin_estimada,cuotas_totales,cuotas_pagadas,activo';
+  const path = `creditos?user_id=eq.${userId}&activo=eq.true&subcategoria=eq.${encodeURIComponent(subcategoria)}&select=${sel}&limit=1`;
+  const res = await fetchTo(url(path), { headers: headers() });
+  if (!res.ok) return null;
+  const rows = (await res.json()) as CreditoRow[];
+  return rows[0] ?? null;
+}
+
+/**
+ * Aplica un pago a un crédito: descuenta `amount` del saldo_actual e incrementa cuotas_pagadas.
+ * Retorna el nuevo saldo, o null si la tabla no existe / no se encontró el crédito.
+ */
+export async function applyPaymentToCredito(userId: string, subcategoria: string, amount: number): Promise<{ newSaldo: number; nombre: string } | null> {
+  const credito = await fetchCreditoBySubcat(userId, subcategoria);
+  if (!credito) return null;
+  const newSaldo = Math.max(0, credito.saldo_actual - amount);
+  const newCuotasPag = (credito.cuotas_pagadas ?? 0) + 1;
+  const path = `creditos?id=eq.${credito.id}`;
+  const res = await fetchTo(url(path), {
+    method: 'PATCH',
+    headers: headers({ Prefer: 'return=minimal' }),
+    body: JSON.stringify({ saldo_actual: newSaldo, cuotas_pagadas: newCuotasPag, updated_at: new Date().toISOString() }),
+  });
+  if (!res.ok) return null;
+  return { newSaldo, nombre: credito.nombre };
+}
