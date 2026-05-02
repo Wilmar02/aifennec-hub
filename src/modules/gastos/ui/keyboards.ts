@@ -70,7 +70,25 @@ export function buildAccountKeyboard(options: readonly AccountOption[]): InlineK
   return kb;
 }
 
-/** InlineKeyboard simple confirmar/cancelar para confirmación final. */
+/** InlineKeyboard simple confirmar/editar/cancelar para confirmación final. */
 export function buildConfirmCancelKeyboard(): InlineKeyboard {
-  return new InlineKeyboard().text('✅ Confirmar', 'gasto:ok').text('❌ Cancelar', 'gasto:cancel');
+  return new InlineKeyboard()
+    .text('✅ Guardar', 'gasto:ok')
+    .text('✏️ Cambiar', 'gasto:editcat')
+    .row()
+    .text('❌ Cancelar', 'gasto:cancel');
+}
+
+/**
+ * Picker de categorías para "cambiar categoría" desde la confirmación natural.
+ * Muestra las categorías del tipo de la tx, callback `gasto:setcat:<cat>`.
+ */
+export function buildEditCategoriaKeyboard(categorias: readonly string[]): InlineKeyboard {
+  const kb = new InlineKeyboard();
+  categorias.forEach((c, i) => {
+    kb.text(c, `gasto:setcat:${c}`);
+    if (i % 2 === 1 || i === categorias.length - 1) kb.row();
+  });
+  kb.text('❌ Cancelar', 'gasto:cancel');
+  return kb;
 }

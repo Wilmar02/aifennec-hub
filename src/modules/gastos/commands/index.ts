@@ -21,6 +21,7 @@ import {
 } from '../ui/formatters.js';
 import { offerToUser } from '../ui/confirmation.js';
 import { RECENT_TX_LIMIT } from '../config.js';
+import { handleWizardTextInput, hasActiveWizard } from './wizard.js';
 
 // ============================================================
 // /gasto <texto>
@@ -259,6 +260,14 @@ export function registerNaturalMessageHandler(bot: Bot): void {
     if (!isAuthorized(ctx)) return;
     const text = ctx.message.text;
     if (text.startsWith('/')) return;
+
+    // Si hay un wizard activo esperando input (categoria custom, monto, descripción),
+    // ese flow tiene prioridad sobre el parser natural.
+    if (hasActiveWizard(ctx)) {
+      const consumed = await handleWizardTextInput(ctx);
+      if (consumed) return;
+    }
+
     const parsed = parseMessage(text);
     if (!parsed) return; // silencio si no parece transacción
     await offerToUser(ctx, parsed);
