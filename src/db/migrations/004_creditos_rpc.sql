@@ -60,14 +60,14 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  UPDATE public.creditos
-  SET saldo_actual = GREATEST(0, saldo_actual - p_amount),
-      cuotas_pagadas = COALESCE(cuotas_pagadas, 0) + 1,
+  UPDATE public.creditos AS c
+  SET saldo_actual = GREATEST(0, c.saldo_actual - p_amount),
+      cuotas_pagadas = COALESCE(c.cuotas_pagadas, 0) + 1,
       updated_at = NOW()
-  WHERE user_id = p_user_id
-    AND subcategoria = p_subcategoria
-    AND activo = true
-  RETURNING creditos.saldo_actual, creditos.nombre;
+  WHERE c.user_id = p_user_id
+    AND c.subcategoria = p_subcategoria
+    AND c.activo = true
+  RETURNING c.saldo_actual, c.nombre;
 END;
 $$;
 
