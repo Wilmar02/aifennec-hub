@@ -13,9 +13,29 @@ describe('extractAmount', () => {
     expect(extractAmount('100 mil pesos')).toBe(100000);
   });
 
-  it('parsea formato M (millones)', () => {
-    expect(extractAmount('3M')).toBe(3_000_000);
-    expect(extractAmount('1.5m')).toBe(1_500_000);
+  it('parsea formato M (millones) cuando hay contexto monetario', () => {
+    expect(extractAmount('abono 3M')).toBe(3_000_000);
+    expect(extractAmount('1.5m pesos')).toBe(1_500_000);
+    expect(extractAmount('$3M davivienda')).toBe(3_000_000);
+    expect(extractAmount('cuota carro 1.5M')).toBe(1_500_000);
+  });
+
+  it('CR-1: NO matchea M sin contexto monetario (placas, modelos)', () => {
+    // Estos deberían fallar el patrón M y caer en otros parsers
+    // "BMW 5M placa" sin contexto → no debe ser $5M. El plainMatch puede capturar otra cosa o null.
+    const r1 = extractAmount('BMW 5M placa AB123');
+    expect(r1).not.toBe(5_000_000);
+    const r2 = extractAmount('modelo M5 nuevo');
+    expect(r2).not.toBe(5_000_000);
+  });
+
+  it('A-1: input gigante NO bloquea por catastrophic backtracking', () => {
+    const huge = 'abc'.repeat(100_000); // 300k chars
+    const start = Date.now();
+    const r = extractAmount(huge);
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeLessThan(100); // <100ms incluso con input enorme
+    expect(r).toBeNull(); // sin números, retorna null
   });
 
   it('parsea números con punto miles colombiano', () => {

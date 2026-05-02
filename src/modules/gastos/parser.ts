@@ -3,8 +3,22 @@ import type { ParsedTransaction, TransactionType } from './types.js';
 
 const COMBINING_DIACRITICS = /[̀-ͯ]/g;
 
+/**
+ * Hard cap del input para evitar catastrophic backtracking en regex con texto enorme.
+ * Mensajes financieros legítimos no superan 500 chars.
+ */
+const MAX_INPUT_LEN = 1000;
+
+/**
+ * Detecta keywords que dan contexto monetario al patrón "M" (millones).
+ * Sin esto, "BMW M5" o "placa AB5M" disparaban falsos positivos de $5M.
+ */
+const MONETARY_CONTEXT = /\$|cop|usd|pesos?|d[oó]lar(es)?|mil(?:l[oó]n(es)?)?|abono|pago|cuota|salario|sueldo|ingreso|gasto|compra|venta/i;
+
 export function extractAmount(text: string): number | null {
-  const clean = text.toLowerCase().replace(/\$/g, '').trim();
+  // A-1: cortar input gigante antes de regex
+  const truncated = text.length > MAX_INPUT_LEN ? text.slice(0, MAX_INPUT_LEN) : text;
+  const clean = truncated.toLowerCase().replace(/\$/g, '').trim();
 
   const kMatch = clean.match(/(\d+(?:[.,]\d+)?)\s*k\b/i);
   if (kMatch) return parseFloat(kMatch[1]!.replace(',', '.')) * 1000;
@@ -12,9 +26,12 @@ export function extractAmount(text: string): number | null {
   const milMatch = clean.match(/(\d+(?:[.,]\d+)?)\s*mil\b/i);
   if (milMatch) return parseFloat(milMatch[1]!.replace(',', '.')) * 1000;
 
-
+  // CR-1: el patrón "M" es ambiguo (modelos de auto, placas) — exigir contexto monetario
   const mMatch = clean.match(/(\d+(?:[.,]\d+)?)\s*m\b/i);
-  if (mMatch) return parseFloat(mMatch[1]!.replace(',', '.')) * 1000000;
+  if (mMatch && MONETARY_CONTEXT.test(text)) {
+    return parseFloat(mMatch[1]!.replace(',', '.')) * 1000000;
+  }
+
   const bigMatch = clean.match(/(\d{1,3}(?:[.,]\d{3})+)/);
   if (bigMatch) return parseInt(bigMatch[1]!.replace(/[.,]/g, ''), 10);
 
