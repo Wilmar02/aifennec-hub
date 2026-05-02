@@ -78,6 +78,18 @@ export function tierOf(pct: number): Tier {
 }
 
 /**
+ * Suma todos los presupuestos de una categoría (una categoría puede tener
+ * múltiples filas, una por subcategoría — ej. Vivienda tiene 9 subs).
+ */
+function sumBudgetForCategory(budgets: { categoria: string; presupuesto: number }[], categoria: string): number {
+  let s = 0;
+  for (const b of budgets) {
+    if (b.categoria === categoria) s += b.presupuesto;
+  }
+  return s;
+}
+
+/**
  * Estado del presupuesto del MES ACTUAL para una categoría específica.
  * Devuelve null si la categoría no existe en aggregates Y no tiene presupuesto.
  *
@@ -92,12 +104,11 @@ export async function getCategoryStatus(userId: string, categoria: string): Prom
   ]);
 
   const agg = aggs.find(a => a.categoria === categoria && (a.tipo_transaccion === 'expense' || a.tipo_transaccion === 'debt_payment'));
-  const presupuesto = budgets.find(b => b.categoria === categoria);
+  const budget = sumBudgetForCategory(budgets, categoria);
 
-  if (!agg && !presupuesto) return null;
+  if (!agg && budget === 0) return null;
 
   const spent = agg?.total ?? 0;
-  const budget = presupuesto?.presupuesto ?? 0;
   const pct = budget > 0 ? (spent / budget) * 100 : 0;
   const remaining = budget - spent;
   const dim = daysInCurrentMonth();
@@ -137,23 +148,30 @@ export async function getMonthOverview(userId: string): Promise<MonthOverview> {
   const totalBudget = budgets.reduce((s, b) => s + b.presupuesto, 0);
   const pct = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
-  // Construir status por categoría con presupuesto
-  const byCat = new Map<string, number>();
-  for (const a of expenseAggs) byCat.set(a.categoria, a.total);
+  // Aggregate gastos y presupuestos por categoría (presupuestos pueden tener
+  // múltiples filas por categoría — una por subcategoría)
+  const spentByCat = new Map<string, number>();
+  for (const a of expenseAggs) spentByCat.set(a.categoria, (spentByCat.get(a.categoria) ?? 0) + a.total);
 
-  const categories: CategoryStatus[] = budgets
-    .map(b => {
-      const spent = byCat.get(b.categoria) ?? 0;
-      const catPct = b.presupuesto > 0 ? (spent / b.presupuesto) * 100 : 0;
+  const budgetByCat = new Map<string, number>();
+  for (const b of budgets) budgetByCat.set(b.categoria, (budgetByCat.get(b.categoria) ?? 0) + b.presupuesto);
+
+  // Build una entrada por categoría única (de presupuestos OR gastos)
+  const allCats = new Set<string>([...budgetByCat.keys(), ...spentByCat.keys()]);
+  const categories: CategoryStatus[] = Array.from(allCats)
+    .map(cat => {
+      const spent = spentByCat.get(cat) ?? 0;
+      const budget = budgetByCat.get(cat) ?? 0;
+      const catPct = budget > 0 ? (spent / budget) * 100 : 0;
       return {
-        categoria: b.categoria,
+        categoria: cat,
         spent,
-        budget: b.presupuesto,
+        budget,
         pct: catPct,
-        remaining: b.presupuesto - spent,
+        remaining: budget - spent,
         daysInMonth: dim,
         daysRemaining: dRemaining,
-        dailySustainable: b.presupuesto - spent > 0 ? (b.presupuesto - spent) / dRemaining : 0,
+        dailySustainable: budget - spent > 0 ? (budget - spent) / dRemaining : 0,
         tier: tierOf(catPct),
       };
     })
