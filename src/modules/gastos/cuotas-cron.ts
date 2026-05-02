@@ -1,6 +1,7 @@
 import { env } from '../../infra/env.js';
 import { logger } from '../../infra/logger.js';
 import { fetchCreditos, getOwnerUserId } from './supabase.js';
+import { getMonthOverview, TIER_EMOJI } from './budget-status.js';
 
 function formatMoney(n: number): string {
   return `$${new Intl.NumberFormat('es-CO').format(Math.round(n))}`;
@@ -119,4 +120,65 @@ export async function runCuotasRecordatorioDiario(): Promise<void> {
 
   await sendTelegramHTML(env.TELEGRAM_DIGEST_CHAT_ID, lines.join('\n'));
   logger.info({ count: proximas.length }, 'cuotas-cron: recordatorio enviado');
+}
+
+/**
+ * Job diario (8 PM Bogotá): resumen del día y del mes corriente.
+ * Pensado para "conciencia financiera" pasiva — un solo mensaje al cierre.
+ *
+ * Solo se manda al OWNER (TELEGRAM_DIGEST_CHAT_ID). Si los datos están
+ * compartidos con esposa, ella ve el mensaje porque comparten chat o
+ * Wilmar lo comenta. Multi-recipient queda para futuro.
+ *
+ * Si no hubo movimientos en el día Y el mes va dentro de presupuesto,
+ * NO mandamos nada para no agregar ruido.
+ */
+export async function runResumenDiario(): Promise<void> {
+  const userId = await getOwnerUserId();
+  if (!userId) {
+    logger.warn('resumen-diario: no userId for owner, skip');
+    return;
+  }
+
+  const overview = await getMonthOverview(userId);
+
+  // Para MVP mostramos el estado del mes (no detalle "hoy"). El detalle de hoy
+  // queda como v2 — requiere una query adicional con filtro fecha=eq.hoy.
+
+  const lines: string[] = [];
+  lines.push('<b>🌙 Cierre del día</b>');
+  lines.push('');
+
+  if (overview.totalBudget > 0) {
+    const pct = Math.round(overview.pct);
+    lines.push(`${TIER_EMOJI[overview.tier]} <b>Mes va:</b> ${formatMoney(overview.totalSpent)} de ${formatMoney(overview.totalBudget)} (${pct}%)`);
+    lines.push(`📅 Día ${overview.daysInMonth - overview.daysRemaining + 1}/${overview.daysInMonth}`);
+  } else {
+    lines.push(`<b>Mes va:</b> ${formatMoney(overview.totalSpent)} en gastos (sin presupuesto seteado)`);
+  }
+
+  // Top 3 categorías más cargadas (con presupuesto)
+  const top = overview.categories.filter(c => c.budget > 0).slice(0, 3);
+  if (top.length > 0) {
+    lines.push('');
+    lines.push('<b>Top categorías:</b>');
+    for (const c of top) {
+      const pct = Math.round(c.pct);
+      lines.push(`${TIER_EMOJI[c.tier]} ${esc(c.categoria)} · ${formatMoney(c.spent)} de ${formatMoney(c.budget)} (${pct}%)`);
+    }
+  }
+
+  // Insight: cuánto pueden gastar al día sin pasarse
+  if (overview.totalBudget > 0 && overview.totalBudget - overview.totalSpent > 0) {
+    const sustainable = (overview.totalBudget - overview.totalSpent) / overview.daysRemaining;
+    lines.push('');
+    lines.push(`💡 Para terminar el mes en azul: ${formatMoney(sustainable)}/día (${overview.daysRemaining} día${overview.daysRemaining === 1 ? '' : 's'} restantes).`);
+  } else if (overview.totalBudget > 0) {
+    const over = overview.totalSpent - overview.totalBudget;
+    lines.push('');
+    lines.push(`⚠️ Mes excedido por ${formatMoney(over)}.`);
+  }
+
+  await sendTelegramHTML(env.TELEGRAM_DIGEST_CHAT_ID, lines.join('\n'));
+  logger.info({ yyyymm: overview.yyyymm, totalSpent: overview.totalSpent, pct: overview.pct }, 'resumen-diario: enviado');
 }

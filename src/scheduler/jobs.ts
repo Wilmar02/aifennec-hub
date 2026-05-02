@@ -3,7 +3,7 @@ import { env } from '../infra/env.js';
 import { logger } from '../infra/logger.js';
 import { runLinkedinIdeasJob } from '../modules/linkedin-ideas/index.js';
 import { runCobranzaJob } from '../modules/cobranza/index.js';
-import { runCuotasResumenMensual, runCuotasRecordatorioDiario } from '../modules/gastos/cuotas-cron.js';
+import { runCuotasResumenMensual, runCuotasRecordatorioDiario, runResumenDiario } from '../modules/gastos/cuotas-cron.js';
 
 export function startScheduler(): void {
   logger.info(
@@ -61,6 +61,19 @@ export function startScheduler(): void {
       logger.info('scheduler: triggering cuotas-recordatorio-diario');
       runCuotasRecordatorioDiario().catch((err) => {
         logger.error({ err }, 'scheduler: cuotas-recordatorio crashed');
+      });
+    },
+    { timezone: 'America/Bogota' }
+  );
+
+  // Resumen diario de conciencia financiera (8 PM Bogotá)
+  logger.info('scheduler: registering resumen-diario job (8 PM Bogotá)');
+  cron.schedule(
+    '0 20 * * *',
+    () => {
+      logger.info('scheduler: triggering resumen-diario');
+      runResumenDiario().catch((err) => {
+        logger.error({ err }, 'scheduler: resumen-diario crashed');
       });
     },
     { timezone: 'America/Bogota' }
