@@ -238,9 +238,15 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'arroz chino': { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
   'arroz paisa': { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
   arroz: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  cine: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  teatro: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  concierto: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
+  // Entretenimiento — sub creada 2026-05-02 (cine/teatro/concierto NO son
+  // "salidas a restaurante" aunque comparten el espíritu social)
+  cine: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
+  teatro: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
+  concierto: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
+  conciertos: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
+  espectaculo: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
+  evento: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
+  entretenimiento: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
   lavanderia: { cat: 'Gastos Personales', sub: 'Otros', tipo: 'expense' },
 
 
