@@ -368,19 +368,28 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   reembolsos: { cat: 'Otros Ingresos', sub: 'Reembolsos', tipo: 'income' },
   premio: { cat: 'Otros Ingresos', sub: 'Premios', tipo: 'income' },
   loteria: { cat: 'Otros Ingresos', sub: 'Premios', tipo: 'income' },
-  // Vendors / clientes específicos (subcategoría = nombre vendor, NO 'Jose' a secas)
+  // Vendors / clientes específicos (subcategoría = nombre vendor)
   'miami viral': { cat: 'Otros Ingresos', sub: 'Cliente Miami Viral', tipo: 'income' },
   yenny: { cat: 'Otros Ingresos', sub: 'Cliente Yenny', tipo: 'income' },
   'agencia bio': { cat: 'Otros Ingresos', sub: 'Cliente Yenny', tipo: 'income' },
+  bio: { cat: 'Otros Ingresos', sub: 'Cliente Yenny', tipo: 'income' },
   'closer luna': { cat: 'Otros Ingresos', sub: 'Cliente Closer Luna', tipo: 'income' },
   ghl: { cat: 'Otros Ingresos', sub: 'Servicios CRM', tipo: 'income' },
   crm: { cat: 'Otros Ingresos', sub: 'Servicios CRM', tipo: 'income' },
   'blue box': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
   bluebox: { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
+  // Decisión usuario 2026-05-02: "todo lo que diga José es Blue Box". José es el
+  // contacto de Wilmar en Blue Box; sus pagos vienen rotulados como "ingreso José".
+  jose: { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
+  'josé': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
+  'pago jose': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
+  'ingreso jose': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
   'classic metals': { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
   'classic': { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
   metals: { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
-  migrantes: { cat: 'Otros Ingresos', sub: 'Proyecto Migrantes', tipo: 'income' },
+  // Soluntec SAS — pauta para "Proyecto Migrantes" (renombrado a Cliente Soluntec 2026-05-02)
+  soluntec: { cat: 'Otros Ingresos', sub: 'Cliente Soluntec', tipo: 'income' },
+  migrantes: { cat: 'Otros Ingresos', sub: 'Cliente Soluntec', tipo: 'income' },
 
   // Rentas y alquileres
   rentas: { cat: 'Rentas y Alquileres', sub: 'Rentas y Alquileres', tipo: 'income' },
@@ -395,8 +404,6 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
 
   // Deudas a personas
   'pago angela': { cat: 'Deudas', sub: 'Préstamo Ángela', tipo: 'debt_payment' },
-  // Nota: "pago jose" / "ingreso jose" REMOVIDO — el contexto debe definir el sub
-  // (nómina/honorarios/etc.) en lugar de mapear por nombre de persona.
 
 };
 
