@@ -6,6 +6,18 @@ import { registerGastosCommands } from '../modules/gastos/telegram-commands.js';
 
 export const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 
+bot.catch((err) => {
+  logger.error(
+    {
+      err: err.error,
+      updateId: err.ctx.update.update_id,
+      from: err.ctx.from?.id,
+      handler: err.message,
+    },
+    'telegram: handler error (bot kept alive)'
+  );
+});
+
 let commandsRegistered = false;
 
 function ensureCommandsRegistered(): void {
