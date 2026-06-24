@@ -85,12 +85,30 @@ describe('categorize — word boundary', () => {
     // "gasto" NO debe matchear "gas"
     expect(categorize('pago gasto cualquiera').subcategoria).not.toBe('Gas');
     // "pantalón" NO debe matchear "pan"
-    expect(categorize('pantalon nuevo').categoria).toBe('Gastos Personales');
+    expect(categorize('pantalon nuevo').categoria).toBe('Compras Personales');
   });
 
   it('keyword multi-palabra gana sobre simple', () => {
-    expect(categorize('comida de perro 50k').subcategoria).toBe('Comida de perro');
+    expect(categorize('comida de perro 50k').subcategoria).toBe('Comida mascota');
     expect(categorize('abono a capital apartamento 5M').subcategoria).toBe('Crédito Hipotecario Davivienda');
+  });
+
+  it('taxonomía nueva por psicología del gasto (2026-06-24)', () => {
+    // Antojos separados de restaurante (gasto hormiga)
+    expect(categorize('helado 8k').subcategoria).toBe('Antojos');
+    expect(categorize('cafe tostao 6k').subcategoria).toBe('Antojos');
+    expect(categorize('restaurante 40k').subcategoria).toBe('Restaurantes');
+    expect(categorize('pizza dominos 50k').subcategoria).toBe('Domicilios');
+    // Vicios separados
+    expect(categorize('cerveza 20k').categoria).toBe('Vicios');
+    // Salud sale de Seguros; Gimnasio de Educación; Mascotas de Vivienda
+    expect(categorize('drogueria 30k').categoria).toBe('Salud');
+    expect(categorize('gimnasio 90k').categoria).toBe('Bienestar');
+    // Alias antes faltantes (caían en "Otros")
+    expect(categorize('go high level subscripcion').subcategoria).toBe('Herramientas empresa');
+    expect(categorize('open ai 90k').subcategoria).toBe('Herramientas empresa');
+    expect(categorize('arreglo carro 200k').categoria).toBe('Transporte');
+    expect(categorize('netflix 40k').subcategoria).toBe('Suscripciones');
   });
 
   it('typos comunes mapean correctamente', () => {

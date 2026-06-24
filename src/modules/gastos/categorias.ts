@@ -9,58 +9,69 @@ interface Mapping {
 /**
  * Diccionario keyword → (categoría, subcategoría).
  *
- * Taxonomía portada del "Presupuesto 2025.xlsx" que Wilmar y su esposa llevan en Excel:
- * 10 categorías de gasto numeradas + categorías de ingreso/ahorro/inversión/deuda.
- * Los nombres de subcategoría son IDÉNTICOS a los del Excel (incluso con números de
- * cuenta como "Internet 12054838774") para que el dashboard mensual cuadre 1:1
- * contra el presupuesto sin renombrar nada.
+ * Taxonomía reorganizada 2026-06-24 por PSICOLOGÍA DEL GASTO (no contable):
+ *  - Fijos ineludibles (Vivienda, Salud obligatoria, Educación, Deudas): se planifican.
+ *  - Variables necesarios (Alimento, Transporte, Salud variable, Mascotas): límite diario.
+ *  - Deseados/viciantes (Comer Fuera, Vicios, Entretenimiento, Compras): FRENO de la app.
+ * Clave del rediseño: separar Antojos/Domicilios de Restaurantes, y aislar Vicios,
+ * para poder frenar el gasto hormiga sin molestar en lo necesario.
  *
- * Reglas de matching (en parser.ts):
- *  - Texto normalizado (sin acentos, sin signos, sin números de 4+ dígitos).
- *  - Match por substring; el keyword más largo gana (sortedMappings por longitud).
- *  - Variantes y typos comunes se incluyen aquí en lugar de fuzzy matching.
+ * Reglas de matching (parser.ts): texto normalizado (sin acentos/signos/números 4+),
+ * match por substring; el keyword más largo gana. Typos comunes se incluyen aquí.
  */
 export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   // ============================================================
-  // 1. VIVIENDA
+  // VIVIENDA (fijo ineludible)
   // ============================================================
   arriendo: { cat: 'Vivienda', sub: 'Arriendo', tipo: 'expense' },
   'cuota apartamento': { cat: 'Vivienda', sub: 'Cuota apartamento', tipo: 'expense' },
   'cuota apto': { cat: 'Vivienda', sub: 'Cuota apartamento', tipo: 'expense' },
-  'comida de perro': { cat: 'Vivienda', sub: 'Comida de perro', tipo: 'expense' },
-  'comida perro': { cat: 'Vivienda', sub: 'Comida de perro', tipo: 'expense' },
-  'menudencias perro': { cat: 'Vivienda', sub: 'Comida de perro', tipo: 'expense' },
-  'comida gato': { cat: 'Vivienda', sub: 'Comida de perro', tipo: 'expense' },
   'seguro hogar': { cat: 'Vivienda', sub: 'Seguros', tipo: 'expense' },
   impuestos: { cat: 'Vivienda', sub: 'Impuestos', tipo: 'expense' },
   predial: { cat: 'Vivienda', sub: 'Impuestos', tipo: 'expense' },
   luz: { cat: 'Vivienda', sub: 'Luz', tipo: 'expense' },
   codensa: { cat: 'Vivienda', sub: 'Luz', tipo: 'expense' },
   enel: { cat: 'Vivienda', sub: 'Luz', tipo: 'expense' },
-  agua: { cat: 'Vivienda', sub: 'Agua-10241005619', tipo: 'expense' },
-  acueducto: { cat: 'Vivienda', sub: 'Agua-10241005619', tipo: 'expense' },
+  agua: { cat: 'Vivienda', sub: 'Agua', tipo: 'expense' },
+  acueducto: { cat: 'Vivienda', sub: 'Agua', tipo: 'expense' },
   gas: { cat: 'Vivienda', sub: 'Gas', tipo: 'expense' },
   vanti: { cat: 'Vivienda', sub: 'Gas', tipo: 'expense' },
-  internet: { cat: 'Vivienda', sub: 'Internet 12054838774', tipo: 'expense' },
-  wifi: { cat: 'Vivienda', sub: 'Internet 12054838774', tipo: 'expense' },
-  movistar: { cat: 'Vivienda', sub: 'Internet 12054838774', tipo: 'expense' },
+  internet: { cat: 'Vivienda', sub: 'Internet', tipo: 'expense' },
+  wifi: { cat: 'Vivienda', sub: 'Internet', tipo: 'expense' },
+  movistar: { cat: 'Vivienda', sub: 'Internet', tipo: 'expense' },
+  celular: { cat: 'Vivienda', sub: 'Servicios', tipo: 'expense' },
+  claro: { cat: 'Vivienda', sub: 'Servicios', tipo: 'expense' },
+  recarga: { cat: 'Vivienda', sub: 'Servicios', tipo: 'expense' },
+  'sim card': { cat: 'Vivienda', sub: 'Servicios', tipo: 'expense' },
   mantenimiento: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
   arreglos: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
   ventanas: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
   cerrajero: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
   plomero: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
   electricista: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
+  hogar: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
+  cojines: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
+  'articulos hogar': { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
+  aseo: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
+  pinturas: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
+  pintura: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
   administracion: { cat: 'Vivienda', sub: 'Administracion', tipo: 'expense' },
   adminitracion: { cat: 'Vivienda', sub: 'Administracion', tipo: 'expense' },
   admon: { cat: 'Vivienda', sub: 'Administracion', tipo: 'expense' },
   'admin apto': { cat: 'Vivienda', sub: 'Administracion', tipo: 'expense' },
-  hogar: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
-  cojines: { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
-  'articulos hogar': { cat: 'Vivienda', sub: 'Mantenimiento / Arreglos', tipo: 'expense' },
-
 
   // ============================================================
-  // 2. ALIMENTO
+  // MASCOTAS (variable necesario) — antes mal puesto en Vivienda
+  // ============================================================
+  'comida de perro': { cat: 'Mascotas', sub: 'Comida mascota', tipo: 'expense' },
+  'comida perro': { cat: 'Mascotas', sub: 'Comida mascota', tipo: 'expense' },
+  'menudencias perro': { cat: 'Mascotas', sub: 'Comida mascota', tipo: 'expense' },
+  'comida gato': { cat: 'Mascotas', sub: 'Comida mascota', tipo: 'expense' },
+  veterinario: { cat: 'Mascotas', sub: 'Veterinario', tipo: 'expense' },
+  veterinaria: { cat: 'Mascotas', sub: 'Veterinario', tipo: 'expense' },
+
+  // ============================================================
+  // ALIMENTO (variable necesario)
   // ============================================================
   mercado: { cat: 'Alimento', sub: 'Mercado', tipo: 'expense' },
   supermercado: { cat: 'Alimento', sub: 'Mercado', tipo: 'expense' },
@@ -78,13 +89,11 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   verduras: { cat: 'Alimento', sub: 'Mercado', tipo: 'expense' },
   carne: { cat: 'Alimento', sub: 'Mercado', tipo: 'expense' },
   pollo: { cat: 'Alimento', sub: 'Mercado', tipo: 'expense' },
+  arroz: { cat: 'Alimento', sub: 'Mercado', tipo: 'expense' },
 
   // ============================================================
-  // 3. TRANSPORTE — solo gastos operativos del vehículo
-  // (las cuotas de crédito vehicular y compra del carro van a Deudas/Inversiones)
+  // TRANSPORTE (variable necesario)
   // ============================================================
-  'carro accesorios': { cat: 'Transporte', sub: 'Reparaciones', tipo: 'expense' },
-  accesorios: { cat: 'Transporte', sub: 'Reparaciones', tipo: 'expense' },
   gasolina: { cat: 'Transporte', sub: 'Gasolina', tipo: 'expense' },
   tanqueo: { cat: 'Transporte', sub: 'Gasolina', tipo: 'expense' },
   acpm: { cat: 'Transporte', sub: 'Gasolina', tipo: 'expense' },
@@ -93,16 +102,26 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'seguro auto': { cat: 'Transporte', sub: 'Seguros', tipo: 'expense' },
   'seguro moto': { cat: 'Transporte', sub: 'Seguros', tipo: 'expense' },
   soat: { cat: 'Transporte', sub: 'Seguros', tipo: 'expense' },
-  reparacion: { cat: 'Transporte', sub: 'Reparaciones', tipo: 'expense' },
-  llantas: { cat: 'Transporte', sub: 'Reparaciones', tipo: 'expense' },
-  'lavado carro': { cat: 'Transporte', sub: 'Reparaciones', tipo: 'expense' },
-  'lavada carro': { cat: 'Transporte', sub: 'Reparaciones', tipo: 'expense' },
-  'lavado moto': { cat: 'Transporte', sub: 'Reparaciones', tipo: 'expense' },
+  // Mantenimiento del vehículo (antes "Reparaciones"; varios caían en "Otros")
+  'carro accesorios': { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  accesorios: { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  reparacion: { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  llantas: { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  'arreglo carro': { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  'aceite carro': { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  'cambio de aceite': { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  'espejos carro': { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  'tornillos carro': { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  pinchada: { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  'lavado carro': { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  'lavada carro': { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
+  'lavado moto': { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
   licencia: { cat: 'Transporte', sub: 'Licencia / Trámites', tipo: 'expense' },
   tramite: { cat: 'Transporte', sub: 'Licencia / Trámites', tipo: 'expense' },
   tecnomecanica: { cat: 'Transporte', sub: 'Licencia / Trámites', tipo: 'expense' },
-  parqueadero: { cat: 'Transporte', sub: 'Transporte público', tipo: 'expense' },
-  peaje: { cat: 'Transporte', sub: 'Transporte público', tipo: 'expense' },
+  comparendo: { cat: 'Transporte', sub: 'Licencia / Trámites', tipo: 'expense' },
+  'parqueadero': { cat: 'Transporte', sub: 'Peajes y Parqueadero', tipo: 'expense' },
+  peaje: { cat: 'Transporte', sub: 'Peajes y Parqueadero', tipo: 'expense' },
   transporte: { cat: 'Transporte', sub: 'Transporte público', tipo: 'expense' },
   transmilenio: { cat: 'Transporte', sub: 'Transporte público', tipo: 'expense' },
   sitp: { cat: 'Transporte', sub: 'Transporte público', tipo: 'expense' },
@@ -114,30 +133,29 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'cuota manejo': { cat: 'Transporte', sub: 'Cuota de manejo tarjeta', tipo: 'expense' },
 
   // ============================================================
-  // 4. SEGUROS (Excel agrupa salud bajo Seguros)
+  // SALUD (variable + obligatoria) — antes mal puesto en "Seguros"
   // ============================================================
-  ortodoncia: { cat: 'Seguros', sub: 'Ortodoncia', tipo: 'expense' },
-  brackets: { cat: 'Seguros', sub: 'Ortodoncia', tipo: 'expense' },
-  dentista: { cat: 'Seguros', sub: 'Ortodoncia', tipo: 'expense' },
-  odontologo: { cat: 'Seguros', sub: 'Ortodoncia', tipo: 'expense' },
-  medico: { cat: 'Seguros', sub: 'Medico', tipo: 'expense' },
-  doctor: { cat: 'Seguros', sub: 'Medico', tipo: 'expense' },
-  consulta: { cat: 'Seguros', sub: 'Medico', tipo: 'expense' },
-  drogueria: { cat: 'Seguros', sub: 'Medico', tipo: 'expense' },
-  medicamento: { cat: 'Seguros', sub: 'Medico', tipo: 'expense' },
-  remedio: { cat: 'Seguros', sub: 'Medico', tipo: 'expense' },
-  farmacia: { cat: 'Seguros', sub: 'Medico', tipo: 'expense' },
-  'seguridad social': { cat: 'Seguros', sub: 'Seguridad social', tipo: 'expense' },
-  eps: { cat: 'Seguros', sub: 'Seguridad social', tipo: 'expense' },
-  'pension obligatoria': { cat: 'Seguros', sub: 'Seguridad social', tipo: 'expense' },
-  'terapia fisica': { cat: 'Seguros', sub: 'Medico', tipo: 'expense' },
-  fisioterapia: { cat: 'Seguros', sub: 'Medico', tipo: 'expense' },
-  vitaminas: { cat: 'Seguros', sub: 'Medico', tipo: 'expense' },
-  salud: { cat: 'Seguros', sub: 'Seguridad social', tipo: 'expense' },
-
+  ortodoncia: { cat: 'Salud', sub: 'Ortodoncia', tipo: 'expense' },
+  brackets: { cat: 'Salud', sub: 'Ortodoncia', tipo: 'expense' },
+  dentista: { cat: 'Salud', sub: 'Ortodoncia', tipo: 'expense' },
+  odontologo: { cat: 'Salud', sub: 'Ortodoncia', tipo: 'expense' },
+  medico: { cat: 'Salud', sub: 'Medicamentos', tipo: 'expense' },
+  doctor: { cat: 'Salud', sub: 'Medicamentos', tipo: 'expense' },
+  consulta: { cat: 'Salud', sub: 'Medicamentos', tipo: 'expense' },
+  drogueria: { cat: 'Salud', sub: 'Medicamentos', tipo: 'expense' },
+  medicamento: { cat: 'Salud', sub: 'Medicamentos', tipo: 'expense' },
+  remedio: { cat: 'Salud', sub: 'Medicamentos', tipo: 'expense' },
+  farmacia: { cat: 'Salud', sub: 'Medicamentos', tipo: 'expense' },
+  'terapia fisica': { cat: 'Salud', sub: 'Medicamentos', tipo: 'expense' },
+  fisioterapia: { cat: 'Salud', sub: 'Medicamentos', tipo: 'expense' },
+  vitaminas: { cat: 'Salud', sub: 'Medicamentos', tipo: 'expense' },
+  'seguridad social': { cat: 'Salud', sub: 'Seguridad social', tipo: 'expense' },
+  eps: { cat: 'Salud', sub: 'Seguridad social', tipo: 'expense' },
+  'pension obligatoria': { cat: 'Salud', sub: 'Seguridad social', tipo: 'expense' },
+  salud: { cat: 'Salud', sub: 'Seguridad social', tipo: 'expense' },
 
   // ============================================================
-  // 5. EDUCACIÓN
+  // EDUCACIÓN (fijo planificado)
   // ============================================================
   taekwondo: { cat: 'Educación', sub: 'Matrícula Taekwondo', tipo: 'expense' },
   fotocopia: { cat: 'Educación', sub: 'Materiales', tipo: 'expense' },
@@ -146,10 +164,6 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   cuaderno: { cat: 'Educación', sub: 'Materiales', tipo: 'expense' },
   utiles: { cat: 'Educación', sub: 'Materiales', tipo: 'expense' },
   colsubsidio: { cat: 'Educación', sub: 'Materiales', tipo: 'expense' },
-  gimnasio: { cat: 'Educación', sub: 'Gimnasio', tipo: 'expense' },
-  gym: { cat: 'Educación', sub: 'Gimnasio', tipo: 'expense' },
-  smartfit: { cat: 'Educación', sub: 'Gimnasio', tipo: 'expense' },
-  bodytech: { cat: 'Educación', sub: 'Gimnasio', tipo: 'expense' },
   universidad: { cat: 'Educación', sub: 'Universidad', tipo: 'expense' },
   semestre: { cat: 'Educación', sub: 'Universidad', tipo: 'expense' },
   matricula: { cat: 'Educación', sub: 'Universidad', tipo: 'expense' },
@@ -164,7 +178,15 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   udemy: { cat: 'Educación', sub: 'Cursos / Ingles', tipo: 'expense' },
 
   // ============================================================
-  // 7. VIAJES Y PASEOS
+  // BIENESTAR (deseado) — antes mal puesto en "Educación"
+  // ============================================================
+  gimnasio: { cat: 'Bienestar', sub: 'Gimnasio', tipo: 'expense' },
+  gym: { cat: 'Bienestar', sub: 'Gimnasio', tipo: 'expense' },
+  smartfit: { cat: 'Bienestar', sub: 'Gimnasio', tipo: 'expense' },
+  bodytech: { cat: 'Bienestar', sub: 'Gimnasio', tipo: 'expense' },
+
+  // ============================================================
+  // VIAJES Y PASEOS (deseado planificado)
   // ============================================================
   viaje: { cat: 'Viajes y Paseos', sub: 'Viajes', tipo: 'expense' },
   vuelo: { cat: 'Viajes y Paseos', sub: 'Transporte', tipo: 'expense' },
@@ -177,81 +199,104 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   salento: { cat: 'Viajes y Paseos', sub: 'Otros', tipo: 'expense' },
 
   // ============================================================
-  // 8. GASTOS PERSONALES
+  // COMER FUERA (deseado/viciante) — FRENO. Antes todo en "Salidas a restaurante"
   // ============================================================
-  barberia: { cat: 'Gastos Personales', sub: 'Barbería / Estética', tipo: 'expense' },
-  peluqueria: { cat: 'Gastos Personales', sub: 'Barbería / Estética', tipo: 'expense' },
-  estetica: { cat: 'Gastos Personales', sub: 'Barbería / Estética', tipo: 'expense' },
-  unas: { cat: 'Gastos Personales', sub: 'Barbería / Estética', tipo: 'expense' },
-  manicure: { cat: 'Gastos Personales', sub: 'Barbería / Estética', tipo: 'expense' },
-  pedicure: { cat: 'Gastos Personales', sub: 'Barbería / Estética', tipo: 'expense' },
-  celular: { cat: 'Gastos Personales', sub: 'Celular', tipo: 'expense' },
-  claro: { cat: 'Gastos Personales', sub: 'Celular', tipo: 'expense' },
-  recarga: { cat: 'Gastos Personales', sub: 'Celular', tipo: 'expense' },
-  'sim card': { cat: 'Gastos Personales', sub: 'Celular', tipo: 'expense' },
-  'sim car': { cat: 'Gastos Personales', sub: 'Celular', tipo: 'expense' },
-  restaurante: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  almuerzo: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  desayuno: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  cena: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  hamburguesa: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  hamburguesas: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  pizza: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  dominos: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  rappi: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  ifood: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  domicilio: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  motel: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  empanada: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  empanadas: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  cafe: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  cafeteria: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  helado: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  helados: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  dulces: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  postre: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  torta: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  galleta: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  'papas fritas': { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  jugo: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  gaseosa: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  onces: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  cerveza: { cat: 'Gastos Personales', sub: 'Gastos Personales/cerveza', tipo: 'expense' },
-  licor: { cat: 'Gastos Personales', sub: 'Gastos Personales/cerveza', tipo: 'expense' },
-  trago: { cat: 'Gastos Personales', sub: 'Gastos Personales/cerveza', tipo: 'expense' },
-  bar: { cat: 'Gastos Personales', sub: 'Gastos Personales/cerveza', tipo: 'expense' },
-  vestimenta: { cat: 'Gastos Personales', sub: 'Vestimenta', tipo: 'expense' },
-  ropa: { cat: 'Gastos Personales', sub: 'Vestimenta', tipo: 'expense' },
-  camisa: { cat: 'Gastos Personales', sub: 'Vestimenta', tipo: 'expense' },
-  pantalon: { cat: 'Gastos Personales', sub: 'Vestimenta', tipo: 'expense' },
-  blusa: { cat: 'Gastos Personales', sub: 'Vestimenta', tipo: 'expense' },
-  vestido: { cat: 'Gastos Personales', sub: 'Vestimenta', tipo: 'expense' },
-  calzado: { cat: 'Gastos Personales', sub: 'Calzado', tipo: 'expense' },
-  zapatos: { cat: 'Gastos Personales', sub: 'Calzado', tipo: 'expense' },
-  tenis: { cat: 'Gastos Personales', sub: 'Calzado', tipo: 'expense' },
-  sandalias: { cat: 'Gastos Personales', sub: 'Calzado', tipo: 'expense' },
-  materiales: { cat: 'Gastos Personales', sub: 'Materiales', tipo: 'expense' },
-  regalo: { cat: 'Gastos Personales', sub: 'Materiales', tipo: 'expense' },
-  'amigo secreto': { cat: 'Gastos Personales', sub: 'Materiales', tipo: 'expense' },
-  donacion: { cat: 'Gastos Personales', sub: 'Materiales', tipo: 'expense' },
-  // Comidas comunes que entran como salidas
-  'arroz chino': { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  'arroz paisa': { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  arroz: { cat: 'Gastos Personales', sub: 'Salidas a restaurante', tipo: 'expense' },
-  // Entretenimiento — sub creada 2026-05-02 (cine/teatro/concierto NO son
-  // "salidas a restaurante" aunque comparten el espíritu social)
-  cine: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
-  teatro: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
-  concierto: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
-  conciertos: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
-  espectaculo: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
-  evento: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
-  entretenimiento: { cat: 'Gastos Personales', sub: 'Entretenimiento', tipo: 'expense' },
-  lavanderia: { cat: 'Gastos Personales', sub: 'Otros', tipo: 'expense' },
-
+  // Domicilios (apps)
+  rappi: { cat: 'Comer Fuera', sub: 'Domicilios', tipo: 'expense' },
+  ifood: { cat: 'Comer Fuera', sub: 'Domicilios', tipo: 'expense' },
+  domicilio: { cat: 'Comer Fuera', sub: 'Domicilios', tipo: 'expense' },
+  dominos: { cat: 'Comer Fuera', sub: 'Domicilios', tipo: 'expense' },
+  // Restaurante (sentarse)
+  restaurante: { cat: 'Comer Fuera', sub: 'Restaurantes', tipo: 'expense' },
+  almuerzo: { cat: 'Comer Fuera', sub: 'Restaurantes', tipo: 'expense' },
+  desayuno: { cat: 'Comer Fuera', sub: 'Restaurantes', tipo: 'expense' },
+  cena: { cat: 'Comer Fuera', sub: 'Restaurantes', tipo: 'expense' },
+  hamburguesa: { cat: 'Comer Fuera', sub: 'Restaurantes', tipo: 'expense' },
+  hamburguesas: { cat: 'Comer Fuera', sub: 'Restaurantes', tipo: 'expense' },
+  pizza: { cat: 'Comer Fuera', sub: 'Restaurantes', tipo: 'expense' },
+  'arroz chino': { cat: 'Comer Fuera', sub: 'Restaurantes', tipo: 'expense' },
+  'arroz paisa': { cat: 'Comer Fuera', sub: 'Restaurantes', tipo: 'expense' },
+  // Antojos / gasto hormiga (el freno fino)
+  cafe: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  cafeteria: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  helado: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  helados: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  dulces: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  postre: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  torta: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  galleta: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  'papas fritas': { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  jugo: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  gaseosa: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  onces: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  empanada: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  empanadas: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  roscon: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  roscones: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  arepa: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  arepas: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  chocolate: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  snack: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  snacks: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
+  pasteles: { cat: 'Comer Fuera', sub: 'Antojos', tipo: 'expense' },
 
   // ============================================================
-  // 9. INVERSIONES
+  // VICIOS (viciante) — FRENO duro. Antes "Gastos Personales/cerveza"
+  // ============================================================
+  cerveza: { cat: 'Vicios', sub: 'Alcohol', tipo: 'expense' },
+  licor: { cat: 'Vicios', sub: 'Alcohol', tipo: 'expense' },
+  trago: { cat: 'Vicios', sub: 'Alcohol', tipo: 'expense' },
+  bar: { cat: 'Vicios', sub: 'Alcohol', tipo: 'expense' },
+  cigarrillo: { cat: 'Vicios', sub: 'Cigarrillos', tipo: 'expense' },
+  cigarrillos: { cat: 'Vicios', sub: 'Cigarrillos', tipo: 'expense' },
+
+  // ============================================================
+  // ENTRETENIMIENTO (deseado)
+  // ============================================================
+  cine: { cat: 'Entretenimiento', sub: 'Salidas', tipo: 'expense' },
+  cinemark: { cat: 'Entretenimiento', sub: 'Salidas', tipo: 'expense' },
+  teatro: { cat: 'Entretenimiento', sub: 'Salidas', tipo: 'expense' },
+  concierto: { cat: 'Entretenimiento', sub: 'Salidas', tipo: 'expense' },
+  conciertos: { cat: 'Entretenimiento', sub: 'Salidas', tipo: 'expense' },
+  espectaculo: { cat: 'Entretenimiento', sub: 'Salidas', tipo: 'expense' },
+  evento: { cat: 'Entretenimiento', sub: 'Salidas', tipo: 'expense' },
+  entretenimiento: { cat: 'Entretenimiento', sub: 'Salidas', tipo: 'expense' },
+  motel: { cat: 'Entretenimiento', sub: 'Salidas', tipo: 'expense' },
+  // Suscripciones (gasto hormiga recurrente) — NUEVA
+  netflix: { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
+  spotify: { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
+  disney: { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
+  hbo: { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
+  'directv': { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
+  'prime video': { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
+  'youtube premium': { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
+
+  // ============================================================
+  // COMPRAS PERSONALES (deseado) — antes revuelto en "Gastos Personales"
+  // ============================================================
+  barberia: { cat: 'Compras Personales', sub: 'Estética', tipo: 'expense' },
+  peluqueria: { cat: 'Compras Personales', sub: 'Estética', tipo: 'expense' },
+  estetica: { cat: 'Compras Personales', sub: 'Estética', tipo: 'expense' },
+  unas: { cat: 'Compras Personales', sub: 'Estética', tipo: 'expense' },
+  manicure: { cat: 'Compras Personales', sub: 'Estética', tipo: 'expense' },
+  pedicure: { cat: 'Compras Personales', sub: 'Estética', tipo: 'expense' },
+  vestimenta: { cat: 'Compras Personales', sub: 'Ropa / Calzado', tipo: 'expense' },
+  ropa: { cat: 'Compras Personales', sub: 'Ropa / Calzado', tipo: 'expense' },
+  camisa: { cat: 'Compras Personales', sub: 'Ropa / Calzado', tipo: 'expense' },
+  pantalon: { cat: 'Compras Personales', sub: 'Ropa / Calzado', tipo: 'expense' },
+  blusa: { cat: 'Compras Personales', sub: 'Ropa / Calzado', tipo: 'expense' },
+  vestido: { cat: 'Compras Personales', sub: 'Ropa / Calzado', tipo: 'expense' },
+  calzado: { cat: 'Compras Personales', sub: 'Ropa / Calzado', tipo: 'expense' },
+  zapatos: { cat: 'Compras Personales', sub: 'Ropa / Calzado', tipo: 'expense' },
+  tenis: { cat: 'Compras Personales', sub: 'Ropa / Calzado', tipo: 'expense' },
+  sandalias: { cat: 'Compras Personales', sub: 'Ropa / Calzado', tipo: 'expense' },
+  regalo: { cat: 'Compras Personales', sub: 'Otros', tipo: 'expense' },
+  'amigo secreto': { cat: 'Compras Personales', sub: 'Otros', tipo: 'expense' },
+  donacion: { cat: 'Compras Personales', sub: 'Otros', tipo: 'expense' },
+  lavanderia: { cat: 'Compras Personales', sub: 'Otros', tipo: 'expense' },
+
+  // ============================================================
+  // INVERSIONES (incluye herramientas de empresa)
   // ============================================================
   'plazo fijo': { cat: 'Inversiones', sub: 'Depósitos a Plazo Fijo', tipo: 'investment' },
   cdt: { cat: 'Inversiones', sub: 'Depósitos a Plazo Fijo', tipo: 'investment' },
@@ -264,10 +309,14 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   crypto: { cat: 'Inversiones', sub: 'Acciones', tipo: 'investment' },
   'herramientas empresa': { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   herramientas: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
+  'herramienta ia': { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   'chat gpt': { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   chatgpt: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   openai: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
+  'open ai': { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   claude: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
+  'go high level': { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
+  gohighlevel: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   vercel: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   hostinger: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   vps: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
@@ -279,7 +328,6 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   figma: { cat: 'Inversiones', sub: 'Herramientas empresa', tipo: 'investment' },
   bonos: { cat: 'Inversiones', sub: 'Bonos', tipo: 'investment' },
   'pago intereses': { cat: 'Inversiones', sub: 'Pagos de Intereses', tipo: 'investment' },
-  // Activos adquiridos (cuota inicial / compra) — NO son gastos del mes
   'cuota inicial vehiculo': { cat: 'Inversiones', sub: 'Vehículo', tipo: 'investment' },
   'cuota inicial carro': { cat: 'Inversiones', sub: 'Vehículo', tipo: 'investment' },
   'cuota inicial auto': { cat: 'Inversiones', sub: 'Vehículo', tipo: 'investment' },
@@ -288,15 +336,13 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'compra auto': { cat: 'Inversiones', sub: 'Vehículo', tipo: 'investment' },
 
   // ============================================================
-  // 10. DEUDAS — subcategorías por crédito específico
+  // DEUDAS — subcategorías por crédito específico
   // ============================================================
-  // Tarjetas de crédito
   'tarjeta credito': { cat: 'Deudas', sub: 'Tarjeta de Crédito', tipo: 'debt_payment' },
   'tarjeta codensa': { cat: 'Deudas', sub: 'Tarjeta de Crédito Codensa', tipo: 'debt_payment' },
   'pago tc': { cat: 'Deudas', sub: 'Tarjeta de Crédito', tipo: 'debt_payment' },
   'pago tarjeta nu': { cat: 'Deudas', sub: 'Tarjeta de Crédito Nu', tipo: 'debt_payment' },
   'tarjeta nu': { cat: 'Deudas', sub: 'Tarjeta de Crédito Nu', tipo: 'debt_payment' },
-  // Crédito hipotecario Davivienda
   'abono a capital apartamento': { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
   'abono capital apartamento': { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
   'abono apartamento': { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
@@ -305,7 +351,6 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'cuota hipoteca': { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
   'pago hipoteca': { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
   hipoteca: { cat: 'Deudas', sub: 'Crédito Hipotecario Davivienda', tipo: 'debt_payment' },
-  // Crédito vehicular Davivienda
   'abono vehiculo': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
   'abono carro': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
   'cuota vehiculo': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
@@ -313,21 +358,20 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'pago vehiculo': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
   'credito vehiculo': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
   'credito carro': { cat: 'Deudas', sub: 'Crédito Vehículo Davivienda', tipo: 'debt_payment' },
-  // Genéricos (después de los específicos por length sort)
   'abono capital': { cat: 'Deudas', sub: 'Abono a capital', tipo: 'debt_payment' },
   'abono a capital': { cat: 'Deudas', sub: 'Abono a capital', tipo: 'debt_payment' },
   'pago prestamo': { cat: 'Deudas', sub: 'Préstamo', tipo: 'debt_payment' },
   prestamo: { cat: 'Deudas', sub: 'Préstamo', tipo: 'debt_payment' },
   libranza: { cat: 'Deudas', sub: 'Préstamo 2', tipo: 'debt_payment' },
   icetex: { cat: 'Deudas', sub: 'Préstamo 2', tipo: 'debt_payment' },
+  'pago angela': { cat: 'Deudas', sub: 'Préstamo Ángela', tipo: 'debt_payment' },
 
   // ============================================================
-  // 6. AHORRO (4 cubetas con %: Colchón 20% / Inversiones-Lote 30% / Viajes 10% / Hipoteca 40%)
+  // AHORRO
   // ============================================================
   ahorro: { cat: 'Ahorro', sub: 'Ahorro general', tipo: 'savings' },
   'cajita nu': { cat: 'Ahorro', sub: 'Cajita Nu', tipo: 'savings' },
   'cajita': { cat: 'Ahorro', sub: 'Cajita Nu', tipo: 'savings' },
-  // Las 4 cubetas del Excel (sheet AHORROS)
   'colchon financiero': { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
   'fondo emergencia': { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
   colchon: { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
@@ -341,14 +385,12 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'meta hipoteca': { cat: 'Ahorro', sub: 'Hipoteca', tipo: 'savings' },
 
   // ============================================================
-  // INGRESOS — subcategorías idénticas a las del Excel (Salario sheet INICIO)
+  // INGRESOS
   // ============================================================
-  // Salario (formal, prestaciones de ley)
   nomina: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
   salario: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
   sueldo: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
   quincena: { cat: 'Salario', sub: 'Nómina', tipo: 'income' },
-  // Desglose de quincenas (Excel sheet ENERO los registra así)
   '1era quincena': { cat: 'Salario', sub: '1era Quincena', tipo: 'income' },
   'primera quincena': { cat: 'Salario', sub: '1era Quincena', tipo: 'income' },
   '2da quincena': { cat: 'Salario', sub: '2da Quincena', tipo: 'income' },
@@ -363,8 +405,6 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'auxilio transporte': { cat: 'Salario', sub: 'Auxilio de transporte', tipo: 'income' },
   viaticos: { cat: 'Salario', sub: 'Viáticos', tipo: 'income' },
   vacaciones: { cat: 'Salario', sub: 'Vacaciones', tipo: 'income' },
-
-  // Otros Ingresos (extras, freelance, vendors específicos)
   'ingreso extra': { cat: 'Otros Ingresos', sub: 'Ingresos Extra', tipo: 'income' },
   'ingresos extra': { cat: 'Otros Ingresos', sub: 'Ingresos Extra', tipo: 'income' },
   freelance: { cat: 'Otros Ingresos', sub: 'Freelance', tipo: 'income' },
@@ -374,7 +414,6 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   reembolsos: { cat: 'Otros Ingresos', sub: 'Reembolsos', tipo: 'income' },
   premio: { cat: 'Otros Ingresos', sub: 'Premios', tipo: 'income' },
   loteria: { cat: 'Otros Ingresos', sub: 'Premios', tipo: 'income' },
-  // Vendors / clientes específicos (subcategoría = nombre vendor)
   'miami viral': { cat: 'Otros Ingresos', sub: 'Cliente Miami Viral', tipo: 'income' },
   yenny: { cat: 'Otros Ingresos', sub: 'Cliente Yenny', tipo: 'income' },
   'agencia bio': { cat: 'Otros Ingresos', sub: 'Cliente Yenny', tipo: 'income' },
@@ -384,8 +423,6 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   crm: { cat: 'Otros Ingresos', sub: 'Servicios CRM', tipo: 'income' },
   'blue box': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
   bluebox: { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
-  // Decisión usuario 2026-05-02: "todo lo que diga José es Blue Box". José es el
-  // contacto de Wilmar en Blue Box; sus pagos vienen rotulados como "ingreso José".
   jose: { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
   'josé': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
   'pago jose': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
@@ -393,29 +430,19 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'classic metals': { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
   'classic': { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
   metals: { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
-  // Soluntec SAS — pauta para "Proyecto Migrantes" (renombrado a Cliente Soluntec 2026-05-02)
   soluntec: { cat: 'Otros Ingresos', sub: 'Cliente Soluntec', tipo: 'income' },
   migrantes: { cat: 'Otros Ingresos', sub: 'Cliente Soluntec', tipo: 'income' },
-
-  // Rentas y alquileres
   rentas: { cat: 'Rentas y Alquileres', sub: 'Rentas y Alquileres', tipo: 'income' },
   alquiler: { cat: 'Rentas y Alquileres', sub: 'Rentas y Alquileres', tipo: 'income' },
   'arriendo cobrado': { cat: 'Rentas y Alquileres', sub: 'Rentas y Alquileres', tipo: 'income' },
-
-  // Intereses / Dividendos
   intereses: { cat: 'Ingresos por Intereses', sub: 'Intereses', tipo: 'income' },
   rendimientos: { cat: 'Ingresos por Intereses', sub: 'Intereses', tipo: 'income' },
   dividendos: { cat: 'Dividendos', sub: 'Dividendos', tipo: 'income' },
   dividendo: { cat: 'Dividendos', sub: 'Dividendos', tipo: 'income' },
-
-  // Deudas a personas
-  'pago angela': { cat: 'Deudas', sub: 'Préstamo Ángela', tipo: 'debt_payment' },
-
 };
 
 /**
  * Fallback por tipo cuando ningún keyword del diccionario hace match.
- * Antes todo caía en 'Otros Gastos / Otros No Clasificados' (incluso ingresos).
  */
 export const FALLBACK_BY_TYPE: Record<TransactionType, { cat: string; sub: string }> = {
   expense: { cat: 'Gastos Personales', sub: 'Otros' },
