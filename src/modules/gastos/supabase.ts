@@ -1,4 +1,5 @@
 import { env } from '../../infra/env.js';
+import { getTrm, aggregateByTypeCop, convertToCop } from './trm.js';
 
 const TABLE = 'base de ingresos';
 
@@ -105,14 +106,14 @@ export async function monthAggregateByType(userId: string, yyyymm: string): Prom
   const [y, m] = yyyymm.split('-').map(Number) as [number, number];
   const lastDay = new Date(y, m, 0).getDate();
   const end = `${yyyymm}-${String(lastDay).padStart(2, '0')}`;
-  const sel = 'tipo_transaccion,Valor';
+  const sel = 'tipo_transaccion,Valor,moneda';
   const path = `${encodeURIComponent(TABLE)}?user_id=eq.${userId}&fecha=gte.${start}&fecha=lte.${end}&select=${sel}`;
   const res = await fetchTo(url(path), { headers: headers() });
   if (!res.ok) throw new Error(`supabase aggregate: ${res.status} ${await res.text()}`);
-  const rows = (await res.json()) as { tipo_transaccion: string; Valor: number }[];
-  const grouped = new Map<string, number>();
-  for (const r of rows) grouped.set(r.tipo_transaccion, (grouped.get(r.tipo_transaccion) ?? 0) + Number(r.Valor));
-  return Array.from(grouped, ([tipo_transaccion, total]) => ({ tipo_transaccion, total }));
+  const rows = (await res.json()) as { tipo_transaccion: string; Valor: number; moneda: string }[];
+  // Convertir USD→COP antes de sumar: sin esto, los ingresos USD se cuentan a 1:1.
+  const trm = await getTrm();
+  return aggregateByTypeCop(rows, trm);
 }
 
 
@@ -128,15 +129,17 @@ export async function monthAggregateByCategoria(userId: string, yyyymm: string):
   const [y, m] = yyyymm.split('-').map(Number) as [number, number];
   const lastDay = new Date(y, m, 0).getDate();
   const end = `${yyyymm}-${String(lastDay).padStart(2, '0')}`;
-  const sel = 'categoria,tipo_transaccion,Valor';
+  const sel = 'categoria,tipo_transaccion,Valor,moneda';
   const path = `${encodeURIComponent(TABLE)}?user_id=eq.${userId}&fecha=gte.${start}&fecha=lte.${end}&select=${sel}`;
   const res = await fetchTo(url(path), { headers: headers() });
   if (!res.ok) throw new Error(`supabase agg-cat: ${res.status} ${await res.text()}`);
-  const rows = (await res.json()) as { categoria: string; tipo_transaccion: string; Valor: number }[];
+  const rows = (await res.json()) as { categoria: string; tipo_transaccion: string; Valor: number; moneda: string }[];
+  // Convertir USD→COP antes de sumar (consistencia con presupuestos en COP).
+  const trm = await getTrm();
   const grouped = new Map<string, { total: number; tipo: string }>();
   for (const r of rows) {
     const cur = grouped.get(r.categoria) ?? { total: 0, tipo: r.tipo_transaccion };
-    cur.total += Number(r.Valor);
+    cur.total += convertToCop(Number(r.Valor), r.moneda, trm);
     grouped.set(r.categoria, cur);
   }
   return Array.from(grouped, ([categoria, v]) => ({ categoria, total: v.total, tipo_transaccion: v.tipo }));
