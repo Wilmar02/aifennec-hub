@@ -111,6 +111,16 @@ describe('categorize — word boundary', () => {
     expect(categorize('netflix 40k').subcategoria).toBe('Suscripciones');
   });
 
+  it('tokens genéricos ya NO fuerzan signo equivocado (fix auditoría 2026-06-24)', () => {
+    expect(categorize('death metal concierto 50k').tipo_transaccion).not.toBe('income');   // 'metals'/'classic'
+    expect(categorize('curso de bio 50k').tipo_transaccion).not.toBe('income');            // 'bio'
+    expect(categorize('pago a jose plomero 80k').tipo_transaccion).not.toBe('income');      // 'jose'
+    expect(categorize('colchon nuevo 300k').categoria).not.toBe('Ahorro');                  // 'colchon'
+    expect(categorize('lote de ropa 50k').categoria).not.toBe('Inversiones');               // 'lote'
+    expect(categorize('prima de seguro 200k').tipo_transaccion).toBe('expense');            // prima seguro vs legal
+    expect(categorize('youtube 20k').subcategoria).toBe('Suscripciones');                   // alias faltante
+  });
+
   it('typos comunes mapean correctamente', () => {
     expect(categorize('adminitracion 110k').subcategoria).toBe('Administracion');
   });

@@ -102,6 +102,9 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'seguro auto': { cat: 'Transporte', sub: 'Seguros', tipo: 'expense' },
   'seguro moto': { cat: 'Transporte', sub: 'Seguros', tipo: 'expense' },
   soat: { cat: 'Transporte', sub: 'Seguros', tipo: 'expense' },
+  // 'prima de seguro' (gasto) gana por longitud sobre 'prima' (prima legal = ingreso)
+  'prima de seguro': { cat: 'Transporte', sub: 'Seguros', tipo: 'expense' },
+  'prima seguro': { cat: 'Transporte', sub: 'Seguros', tipo: 'expense' },
   // Mantenimiento del vehículo (antes "Reparaciones"; varios caían en "Otros")
   'carro accesorios': { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
   accesorios: { cat: 'Transporte', sub: 'Mantenimiento vehículo', tipo: 'expense' },
@@ -269,7 +272,10 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   hbo: { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
   'directv': { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
   'prime video': { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
+  prime: { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
   'youtube premium': { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
+  youtube: { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
+  max: { cat: 'Entretenimiento', sub: 'Suscripciones', tipo: 'expense' },
 
   // ============================================================
   // COMPRAS PERSONALES (deseado) — antes revuelto en "Gastos Personales"
@@ -301,7 +307,7 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'plazo fijo': { cat: 'Inversiones', sub: 'Depósitos a Plazo Fijo', tipo: 'investment' },
   cdt: { cat: 'Inversiones', sub: 'Depósitos a Plazo Fijo', tipo: 'investment' },
   'inversion lote': { cat: 'Inversiones', sub: 'Inversion Lote', tipo: 'investment' },
-  lote: { cat: 'Inversiones', sub: 'Inversion Lote', tipo: 'investment' },
+  // 'lote' suelto eliminado: "lote de ropa/mercado" no es inversión
   acciones: { cat: 'Inversiones', sub: 'Acciones', tipo: 'investment' },
   etf: { cat: 'Inversiones', sub: 'Acciones', tipo: 'investment' },
   sp500: { cat: 'Inversiones', sub: 'Acciones', tipo: 'investment' },
@@ -374,8 +380,7 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'cajita': { cat: 'Ahorro', sub: 'Cajita Nu', tipo: 'savings' },
   'colchon financiero': { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
   'fondo emergencia': { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
-  colchon: { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
-  emergencia: { cat: 'Ahorro', sub: 'Colchón financiero', tipo: 'savings' },
+  // 'colchon'/'emergencia' sueltos eliminados: "colchón nuevo" (mueble) o "emergencia médica" (salud) no son ahorro
   'ahorro lote': { cat: 'Ahorro', sub: 'Inversión Lote', tipo: 'savings' },
   'ahorro inversiones': { cat: 'Ahorro', sub: 'Inversión Lote', tipo: 'savings' },
   'ahorro viajes': { cat: 'Ahorro', sub: 'Viajes y disfrute', tipo: 'savings' },
@@ -397,7 +402,7 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'segunda quincena': { cat: 'Salario', sub: '2da Quincena', tipo: 'income' },
   bonificacion: { cat: 'Salario', sub: 'Bonificaciones', tipo: 'income' },
   bonificaciones: { cat: 'Salario', sub: 'Bonificaciones', tipo: 'income' },
-  bono: { cat: 'Salario', sub: 'Bonificaciones', tipo: 'income' },
+  // 'bono' suelto eliminado: colisiona con "bonos" (inversión) y "bono regalo" (gasto)
   comision: { cat: 'Salario', sub: 'Comisiones', tipo: 'income' },
   comisiones: { cat: 'Salario', sub: 'Comisiones', tipo: 'income' },
   prima: { cat: 'Salario', sub: 'Prima', tipo: 'income' },
@@ -417,19 +422,18 @@ export const CUSTOM_MAPPINGS: Record<string, Mapping> = {
   'miami viral': { cat: 'Otros Ingresos', sub: 'Cliente Miami Viral', tipo: 'income' },
   yenny: { cat: 'Otros Ingresos', sub: 'Cliente Yenny', tipo: 'income' },
   'agencia bio': { cat: 'Otros Ingresos', sub: 'Cliente Yenny', tipo: 'income' },
-  bio: { cat: 'Otros Ingresos', sub: 'Cliente Yenny', tipo: 'income' },
+  // 'bio' suelto eliminado: token de 3 letras que marcaba ingreso cualquier "bio..."
   'closer luna': { cat: 'Otros Ingresos', sub: 'Cliente Closer Luna', tipo: 'income' },
-  ghl: { cat: 'Otros Ingresos', sub: 'Servicios CRM', tipo: 'income' },
-  crm: { cat: 'Otros Ingresos', sub: 'Servicios CRM', tipo: 'income' },
+  // 'ghl' suelto eliminado: era income (cobro CRM) pero colisionaba con el GASTO de la plataforma GoHighLevel
+  'cobro ghl': { cat: 'Otros Ingresos', sub: 'Servicios CRM', tipo: 'income' },
+  'servicio crm': { cat: 'Otros Ingresos', sub: 'Servicios CRM', tipo: 'income' },
   'blue box': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
   bluebox: { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
-  jose: { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
-  'josé': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
+  // 'jose'/'josé' sueltos eliminados: nombre propio común; "pagué a José" (gasto) caía como income
   'pago jose': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
   'ingreso jose': { cat: 'Otros Ingresos', sub: 'Cliente Blue Box', tipo: 'income' },
   'classic metals': { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
-  'classic': { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
-  metals: { cat: 'Otros Ingresos', sub: 'Cliente Classic Metals', tipo: 'income' },
+  // 'classic' y 'metals' sueltos eliminados: tokens demasiado genéricos que forzaban income
   soluntec: { cat: 'Otros Ingresos', sub: 'Cliente Soluntec', tipo: 'income' },
   migrantes: { cat: 'Otros Ingresos', sub: 'Cliente Soluntec', tipo: 'income' },
   rentas: { cat: 'Rentas y Alquileres', sub: 'Rentas y Alquileres', tipo: 'income' },

@@ -9,6 +9,11 @@ describe('convertToCop', () => {
   it('deja COP sin cambios (TRM no aplica)', () => {
     expect(convertToCop(5000, 'COP', 4000)).toBe(5000);
   });
+
+  it('sanea valores no numéricos a 0 (no propaga NaN al total)', () => {
+    expect(convertToCop(NaN, 'USD', 4000)).toBe(0);
+    expect(convertToCop(Number('abc'), 'COP', 4000)).toBe(0);
+  });
 });
 
 describe('aggregateByTypeCop', () => {
@@ -41,6 +46,13 @@ describe('parseTrmResponse', () => {
     expect(parseTrmResponse(null)).toBeNull();
     expect(parseTrmResponse([{ valor: 'abc' }])).toBeNull();
   });
+
+  it('rechaza TRM fuera de rango sensato (formato decimal roto, 0, negativos)', () => {
+    expect(parseTrmResponse([{ valor: '3.95' }])).toBeNull();   // coma/punto decimal roto
+    expect(parseTrmResponse([{ valor: '0' }])).toBeNull();
+    expect(parseTrmResponse([{ valor: '-4000' }])).toBeNull();
+    expect(parseTrmResponse([{ valor: '99999999' }])).toBeNull();
+  });
 });
 
 describe('getTrm', () => {
@@ -54,5 +66,22 @@ describe('getTrm', () => {
   it('usa el fallback cuando la red falla (el balance nunca se rompe)', async () => {
     const trm = await getTrm(async () => { throw new Error('network down'); });
     expect(trm).toBe(TRM_FALLBACK);
+  });
+
+  it('cachea dentro del TTL y re-fetchea pasado el TTL', async () => {
+    let calls = 0;
+    const f = async () => { calls++; return [{ valor: '4000' }]; };
+    await getTrm(f, 0);
+    await getTrm(f, 1000);                    // dentro del TTL → no re-fetch
+    expect(calls).toBe(1);
+    await getTrm(f, 25 * 60 * 60 * 1000);     // pasado el TTL → re-fetch
+    expect(calls).toBe(2);
+  });
+
+  it('single-flight: llamadas concurrentes en frío comparten un solo fetch', async () => {
+    let calls = 0;
+    const f = async () => { calls++; await Promise.resolve(); return [{ valor: '4000' }]; };
+    await Promise.all([getTrm(f, 0), getTrm(f, 0), getTrm(f, 0)]);
+    expect(calls).toBe(1);
   });
 });
