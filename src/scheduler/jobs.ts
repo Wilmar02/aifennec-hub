@@ -6,20 +6,24 @@ import { runCobranzaJob } from '../modules/cobranza/index.js';
 import { runCuotasResumenMensual, runCuotasRecordatorioDiario, runResumenDiario } from '../modules/gastos/cuotas-cron.js';
 
 export function startScheduler(): void {
-  logger.info(
-    { cron: env.LINKEDIN_IDEAS_CRON, tz: env.LINKEDIN_IDEAS_TIMEZONE },
-    'scheduler: registering linkedin-ideas job'
-  );
-  cron.schedule(
-    env.LINKEDIN_IDEAS_CRON,
-    () => {
-      logger.info('scheduler: triggering linkedin-ideas');
-      runLinkedinIdeasJob().catch((err) => {
-        logger.error({ err }, 'scheduler: linkedin-ideas crashed');
-      });
-    },
-    { timezone: env.LINKEDIN_IDEAS_TIMEZONE }
-  );
+  if (env.APIFY_TOKEN) {
+    logger.info(
+      { cron: env.LINKEDIN_IDEAS_CRON, tz: env.LINKEDIN_IDEAS_TIMEZONE },
+      'scheduler: registering linkedin-ideas job'
+    );
+    cron.schedule(
+      env.LINKEDIN_IDEAS_CRON,
+      () => {
+        logger.info('scheduler: triggering linkedin-ideas');
+        runLinkedinIdeasJob().catch((err) => {
+          logger.error({ err }, 'scheduler: linkedin-ideas crashed');
+        });
+      },
+      { timezone: env.LINKEDIN_IDEAS_TIMEZONE }
+    );
+  } else {
+    logger.warn('scheduler: APIFY_TOKEN not set, linkedin-ideas job disabled');
+  }
 
   if (env.GHL_TOKEN) {
     logger.info(
