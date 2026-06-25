@@ -1,7 +1,6 @@
 import { Bot } from 'grammy';
 import { env } from '../infra/env.js';
 import { logger } from '../infra/logger.js';
-import { registerCobranzaCommands } from '../modules/cobranza/telegram-commands.js';
 import { registerGastosCommands } from '../modules/gastos/telegram-commands.js';
 
 export const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
@@ -22,7 +21,8 @@ let commandsRegistered = false;
 
 function ensureCommandsRegistered(): void {
   if (commandsRegistered) return;
-  registerCobranzaCommands(bot);
+  // Bot solo-financiero: solo se registran los comandos de gastos.
+  // (Cobranza desconectada a propósito: sus comandos/errores iban a este mismo chat.)
   if (env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY) {
     registerGastosCommands(bot);
   } else {
