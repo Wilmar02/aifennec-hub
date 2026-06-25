@@ -4,7 +4,7 @@ import { config } from 'dotenv';
 config();
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().url().optional(),
   APIFY_TOKEN: z.string().min(20).optional(),
   OPENAI_API_KEY: z.string().startsWith('sk-'),
   GOOGLE_SHEET_ID: z.string().min(10).optional(),
