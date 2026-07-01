@@ -30,4 +30,17 @@ describe('buildBody', () => {
     expect(body).toMatch(/confirm/i);
     expect(body).toContain('John Very'); // notaCorreo
   });
+
+  it('omite la nota cuando notaCorreo no está presente', () => {
+    const clienteSinNota: Cliente = { id: 'yenny', activo: true, razonSocial: 'Yenny — Agencia Bio',
+      email: 'y@x.com', emisor: 'wilmar', diaPago: 7, moneda: 'COP', conceptoPeriodo: 'Servicios',
+      items: [] };
+    const body = buildBody({
+      cliente: clienteSinNota, emisor, moneda: 'COP', total: 1657000, fechaVencimiento: new Date(2026, 6, 7),
+      remitenteNombre: 'Wilmar Rocha López',
+      items: [{ id: 'YEN-01', concepto: 'Pauta Meta', monto: 330000 }],
+    });
+    expect(body).not.toContain('undefined');
+    expect(body).not.toContain('John Very');
+  });
 });
