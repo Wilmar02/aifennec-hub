@@ -134,6 +134,7 @@ export function generateCobranzaPdf(input: PdfInput): Promise<Buffer> {
     y += 34;
 
     doc.y = y;
+    doc.x = doc.page.margins.left; // reset cursor X: la tabla dejó la X en la columna derecha
     doc.moveDown(1);
 
     // Payment block

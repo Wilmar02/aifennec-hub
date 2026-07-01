@@ -11,7 +11,7 @@ export function nextInvoiceNumber(statePath: string, opts: { dryRun?: boolean } 
       throw new Error(`Estado de numeración corrupto en ${statePath}: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    const lastInvoiceNumber = parsed?.lastInvoiceNumber;
+    const lastInvoiceNumber = (parsed as Record<string, unknown>)?.lastInvoiceNumber;
     if (typeof lastInvoiceNumber !== 'number' || !Number.isInteger(lastInvoiceNumber) || lastInvoiceNumber < 0) {
       throw new Error(`Estado de numeración corrupto en ${statePath}: lastInvoiceNumber debe ser un entero no-negativo, recibido ${JSON.stringify(lastInvoiceNumber)}`);
     }
