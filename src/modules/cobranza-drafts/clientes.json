@@ -1,0 +1,31 @@
+{
+  "emisores": {
+    "wilmar": {
+      "nombre": "Wilmar Rocha López",
+      "cedula": "1.019.031.051",
+      "direccion": "Kr 81H Sur 75-85 T21 Apto 303, Bogotá",
+      "banco": "Bancolombia",
+      "tipoCuenta": "cuenta de ahorros",
+      "numeroCuenta": "662-500-829-92"
+    }
+  },
+  "remitente": { "email": "wilmar@aifennecia.com", "nombre": "Wilmar Rocha López" },
+  "clientes": [
+    {
+      "id": "yenny",
+      "activo": true,
+      "razonSocial": "Yenny Solórzano — Agencia Bio",
+      "email": "ysolorzano7@gmail.com",
+      "emisor": "wilmar",
+      "diaPago": 7,
+      "moneda": "COP",
+      "conceptoPeriodo": "Servicios de marketing digital y operación CRM",
+      "items": [
+        { "id": "YEN-01", "concepto": "Banana Playa — Pautas Meta", "monto": 330000, "descripcion": "Gestión y optimización de campañas en Meta: estructura, audiencias, creativos, optimización y reporte." },
+        { "id": "YEN-02", "concepto": "Ópticas OVA — Pautas Meta", "monto": 330000, "descripcion": "Gestión y optimización de campañas en Meta para OVA: campañas, audiencias, creativos y reporte." },
+        { "id": "YEN-03", "concepto": "Ópticas OVA — Asesoría y operación CRM (GoHighLevel)", "monto": 597000, "descripcion": "Pipeline, automatizaciones, integraciones WhatsApp/correo/calendario y soporte." },
+        { "id": "YEN-05", "concepto": "Ópticas OVA — IA Bot WhatsApp", "monto": 400000, "descripcion": "Atención automatizada, agendamiento, validación de convenios, infraestructura y mantenimiento." }
+      ]
+    }
+  ]
+}

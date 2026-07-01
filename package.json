@@ -10,6 +10,8 @@
     "scrape:once": "tsx src/modules/linkedin-ideas/index.ts --once",
     "cobranza:once": "tsx src/modules/cobranza/index.ts",
     "cobranza:dry": "tsx src/modules/cobranza/index.ts --dry",
+    "cobranza:drafts": "tsx src/modules/cobranza-drafts/index.ts",
+    "cobranza:drafts:dry": "tsx src/modules/cobranza-drafts/index.ts --dry",
     "migrate": "tsx src/db/migrate.ts",
     "test": "vitest run",
     "test:watch": "vitest"

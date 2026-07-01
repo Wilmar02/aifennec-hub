@@ -1,6 +1,8 @@
 import cron from 'node-cron';
 import { logger } from '../infra/logger.js';
+import { env } from '../infra/env.js';
 import { runCuotasResumenMensual, runCuotasRecordatorioDiario, runResumenDiario } from '../modules/gastos/cuotas-cron.js';
+import { runCobranzaDraftsJob } from '../modules/cobranza-drafts/index.js';
 
 // Bot solo-financiero: solo se registran los jobs de gastos.
 // Cobranza y LinkedIn-ideas viven en el repo pero están desconectados a propósito
@@ -43,5 +45,18 @@ export function startScheduler(): void {
       });
     },
     { timezone: 'America/Bogota' }
+  );
+
+  // Cobranza-drafts: día 1 de cada mes deja los borradores en Gmail (nunca envía).
+  logger.info({ cron: env.COBRANZA_DRAFTS_CRON }, 'scheduler: registering cobranza-drafts job');
+  cron.schedule(
+    env.COBRANZA_DRAFTS_CRON,
+    () => {
+      logger.info('scheduler: triggering cobranza-drafts');
+      runCobranzaDraftsJob().catch((err) => {
+        logger.error({ err }, 'scheduler: cobranza-drafts crashed');
+      });
+    },
+    { timezone: env.COBRANZA_DRAFTS_TIMEZONE }
   );
 }
