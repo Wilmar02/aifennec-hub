@@ -12,6 +12,15 @@ export function buildRawMessage(args: {
   subject: string; body: string; pdf: Buffer; filename: string;
 }): string {
   const { fromEmail, fromName, to, subject, body, pdf, filename } = args;
+
+  // Guard against CRLF header injection
+  if (to.includes('\r') || to.includes('\n')) {
+    throw new Error('Valor de cabecera inválido (CRLF) en to');
+  }
+  if (fromEmail.includes('\r') || fromEmail.includes('\n')) {
+    throw new Error('Valor de cabecera inválido (CRLF) en fromEmail');
+  }
+
   const boundary = 'mixed_boundary_cobranza_drafts';
   const pdfB64 = pdf.toString('base64').replace(/(.{76})/g, '$1\r\n');
   const lines = [
