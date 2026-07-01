@@ -26,4 +26,26 @@ describe('nextInvoiceNumber', () => {
     expect(existsSync(state)).toBe(false);
     expect(nextInvoiceNumber(state)).toBe(1);
   });
+
+  it('lanza error si archivo JSON está corrupto', () => {
+    writeFileSync(state, '{ not json');
+    expect(() => nextInvoiceNumber(state)).toThrow(/corrupto/i);
+  });
+
+  it('lanza error si lastInvoiceNumber no es un entero válido (string)', () => {
+    writeFileSync(state, JSON.stringify({ lastInvoiceNumber: 'x' }));
+    expect(() => nextInvoiceNumber(state)).toThrow(/corrupto/i);
+  });
+
+  it('lanza error si lastInvoiceNumber es negativo', () => {
+    writeFileSync(state, JSON.stringify({ lastInvoiceNumber: -3 }));
+    expect(() => nextInvoiceNumber(state)).toThrow(/corrupto/i);
+  });
+
+  it('no deja archivo .tmp después de escribir exitosamente', () => {
+    writeFileSync(state, JSON.stringify({ lastInvoiceNumber: 10 }));
+    nextInvoiceNumber(state);
+    const tmpFile = `${state}.tmp`;
+    expect(existsSync(tmpFile)).toBe(false);
+  });
 });
