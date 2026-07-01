@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { nextInvoiceNumber } from '../../src/modules/cobranza-drafts/numbering.js';
@@ -45,7 +45,7 @@ describe('nextInvoiceNumber', () => {
   it('no deja archivo .tmp después de escribir exitosamente', () => {
     writeFileSync(state, JSON.stringify({ lastInvoiceNumber: 10 }));
     nextInvoiceNumber(state);
-    const tmpFile = `${state}.tmp`;
-    expect(existsSync(tmpFile)).toBe(false);
+    const tmpFiles = readdirSync(dir).filter(f => f.endsWith('.tmp'));
+    expect(tmpFiles).toHaveLength(0);
   });
 });
