@@ -133,10 +133,19 @@ existe, al menos un ítem por cliente activo.
 
 ## 7. Gmail — autenticación y borradores
 
-- Reusa el patrón de `src/modules/linkedin-ideas/sheets.ts`: service account leído desde
-  `GOOGLE_SERVICE_ACCOUNT_JSON_PATH`, con **domain-wide delegation** impersonando
-  `wilmar@aifennecia.com` (vía `subject`).
-- Crear borradores usa `gmail.users.drafts.create({ userId: 'me', requestBody: { message: { raw } } })`
+**⚠️ Verificado contra el código (2026-07-01): el patrón de auth NO es el de `sheets.ts`.**
+`linkedin-ideas/sheets.ts` usa `new google.auth.GoogleAuth({ keyFile, scopes })` **sin
+impersonación** — la service account actúa como ella misma sobre un Sheet compartido con ella.
+Para crear borradores **en el buzón de wilmar@aifennecia.com** hace falta **impersonar** ese
+usuario (domain-wide delegation), que es un mecanismo distinto.
+
+- Se reusa: la dependencia `googleapis` (^144, ya instalada) y el mismo archivo de credenciales
+  `GOOGLE_SERVICE_ACCOUNT_JSON_PATH` (la SA `aifennec-sheets-writer`, si tiene DWD habilitada).
+- Auth con impersonación: leer el JSON de la SA y construir
+  `new google.auth.JWT({ email, key, scopes: ['.../gmail.compose'], subject: <remitente.email> })`
+  (o `GoogleAuth` con `clientOptions: { subject }`). El `subject` sale de `remitente.email` del
+  `clientes.json` — no se hardcodea.
+- Crear borradores: `gmail.users.drafts.create({ userId: 'me', requestBody: { message: { raw } } })`
   donde `raw` es el MIME en base64url.
 - **MIME:** `multipart/mixed` con parte `text/plain` (o `text/html`) + parte adjunta
   `application/pdf` (base64). Display-name del `From` en **encoded-word RFC 2047**
@@ -214,8 +223,16 @@ Tests unitarios (vitest), sin efectos reales:
 
 ## 14. Riesgos y pasos manuales
 
-1. **Scope `gmail.compose`** (§7) — bloqueante hasta que Wilmar lo agregue en admin.google.com.
+1. **Domain-wide delegation + scope `gmail.compose`** (§7) — bloqueante. La SA
+   `aifennec-sheets-writer` debe tener DWD habilitada y, en admin.google.com → Delegación de todo
+   el dominio, el Client ID autorizado con el scope `.../gmail.compose` (hoy la memoria indica solo
+   `gmail.send`, que NO permite crear borradores → 403). El patrón de `sheets.ts` no cubre esto:
+   es auth con impersonación, código nuevo en `gmail.ts`.
 2. **Volumen persistente** para `.state.json` y `clientes.json` — si no persiste, se pierde el
    contador en cada redeploy. Verificar el montaje del volumen en Hetzner.
 3. **Confirmar** el Client ID / SA reales en el panel (los de memoria pueden estar desactualizados).
 4. **RAM en rebuild** — no rebuildear con la stack al tope.
+5. **Env para el cron:** `env.ts` ya tiene `COBRANZA_CRON/TIMEZONE` (del motor viejo); usar
+   nombres nuevos `COBRANZA_DRAFTS_CRON/TIMEZONE` para no chocar. El envío real por Gmail no
+   existe hoy en el repo (el motor viejo enviaba vía GHL `channels/ghl.ts::sendEmail`), así que
+   `gmail.ts` es genuinamente nuevo.
