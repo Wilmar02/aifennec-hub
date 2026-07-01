@@ -4,9 +4,11 @@ import { env } from '../infra/env.js';
 import { runCuotasResumenMensual, runCuotasRecordatorioDiario, runResumenDiario } from '../modules/gastos/cuotas-cron.js';
 import { runCobranzaDraftsJob } from '../modules/cobranza-drafts/index.js';
 
-// Bot solo-financiero: solo se registran los jobs de gastos.
-// Cobranza y LinkedIn-ideas viven en el repo pero están desconectados a propósito
-// (sus notificaciones de error iban a este mismo chat de Telegram).
+// Bot solo-financiero: se registran los jobs de gastos + cobranza-drafts.
+// El motor VIEJO `src/modules/cobranza/` (GHL, WhatsApp, dunning) y LinkedIn-ideas
+// siguen desconectados a propósito (sus notificaciones de error iban a este mismo
+// chat de Telegram). El job NUEVO `cobranza-drafts` (solo Gmail, solo borradores)
+// sí se registra abajo.
 export function startScheduler(): void {
   // Resumen mensual de cuotas: día 1 de cada mes a las 8 AM Bogotá
   logger.info('scheduler: registering cuotas-resumen-mensual job (1 de mes 8 AM)');

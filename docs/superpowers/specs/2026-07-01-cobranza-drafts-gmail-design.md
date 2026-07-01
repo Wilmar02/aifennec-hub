@@ -210,6 +210,27 @@ Plantilla estándar (en `body.ts`), con tono que reduce la mora crónica de algu
 - Deploy: `git pull` de la rama mergeada + rebuild de imagen + relanzar servicio. Evitar
   rebuild con la RAM al tope (lección OOM del VPS viejo; Hetzner tiene más aire, verificar).
 
+### ⚠️ Nota importante — semilla en la imagen vs. volumen persistente para `.state.json`
+
+El `Dockerfile` copia `src/modules/cobranza-drafts/*.json` (`clientes.json` y `.state.json`) al
+stage `runtime`, en `dist/modules/cobranza-drafts/`, para que el módulo tenga datos incluso sin
+volumen montado (arranca con la semilla del repo, `.state.json` = `{"lastInvoiceNumber":85}`,
+o sea próxima factura #86). **Esa copia va dentro de la imagen, que es efímera**: un rebuild o
+un redeploy con volumen nuevo la resetea a la semilla del repo y **reinicia la numeración**,
+duplicando números ya usados con clientes reales.
+
+Para continuidad de la numeración entre redeploys es obligatorio:
+
+1. Montar un **volumen persistente** en el contenedor (ej. `/data/cobranza-drafts/`).
+2. Sembrarlo una sola vez con `.state.json` = `{"lastInvoiceNumber":85}` (próxima = #86).
+3. Apuntar `COBRANZA_DRAFTS_STATE_PATH` a esa ruta montada (ej.
+   `/data/cobranza-drafts/.state.json`), para que el contador persista y no vuelva a la semilla
+   de la imagen en cada rebuild.
+
+De forma opcional, `COBRANZA_DRAFTS_CONFIG_PATH` puede apuntar a un `clientes.json` en el mismo
+volumen, para editar clientes/ítems/emisores sin reconstruir la imagen. Si no se define esa env,
+se usa la copia semilla que trae la imagen (§ FIX Docker).
+
 ## 13. Testing
 
 Tests unitarios (vitest), sin efectos reales:

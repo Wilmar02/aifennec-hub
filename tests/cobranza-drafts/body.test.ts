@@ -10,7 +10,7 @@ const cliente: Cliente = { id: 'yenny', activo: true, razonSocial: 'Yenny — Ag
 
 describe('buildSubject', () => {
   it('incluye número y fecha de vencimiento', () => {
-    const s = buildSubject('85', new Date(2026, 6, 1), new Date(2026, 6, 7));
+    const s = buildSubject('85', new Date(2026, 6, 1), new Date(2026, 6, 7), 'Servicios de marketing digital');
     expect(s).toContain('N°85');
     expect(s).toContain('julio 2026');
     expect(s).toContain('7 de julio');

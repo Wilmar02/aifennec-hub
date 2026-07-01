@@ -1,9 +1,14 @@
 import type { Cliente, Item, Emisor } from './types.js';
 import { formatMoney, formatDate, MESES } from './format.js';
 
-export function buildSubject(numero: string, hoy: Date, fechaVencimiento: Date): string {
+export function buildSubject(
+  numero: string,
+  hoy: Date,
+  fechaVencimiento: Date,
+  conceptoPeriodo: string,
+): string {
   const periodo = `${MESES[hoy.getMonth()]} ${hoy.getFullYear()}`;
-  return `Cuenta de Cobro N°${numero} — Servicios ${periodo} | Vence el ${formatDate(fechaVencimiento)}`;
+  return `Cuenta de Cobro N°${numero} — ${conceptoPeriodo} ${periodo} | Vence el ${formatDate(fechaVencimiento)}`;
 }
 
 export function buildBody(args: {

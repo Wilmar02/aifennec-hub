@@ -43,7 +43,7 @@ export async function runCobranzaDrafts(opts: {
       emisor, items: cliente.items,
     });
 
-    const subject = buildSubject(numero, hoy, fechaVencimiento);
+    const subject = buildSubject(numero, hoy, fechaVencimiento, cliente.conceptoPeriodo);
     const body = buildBody({
       cliente, items: cliente.items, total, fechaVencimiento, emisor,
       moneda: cliente.moneda, remitenteNombre: config.remitente.nombre,
