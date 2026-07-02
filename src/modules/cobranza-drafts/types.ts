@@ -29,6 +29,7 @@ export interface Cliente {
   moneda: 'COP' | 'USD';
   conceptoPeriodo: string;
   notaCorreo?: string;
+  recordatorios?: boolean;
   items: Item[];
 }
 
