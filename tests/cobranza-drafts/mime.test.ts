@@ -94,4 +94,36 @@ describe('buildRawMessage', () => {
     const pdfDecoded = Buffer.from(pdfB64, 'base64');
     expect(pdfDecoded.equals(pdfBuffer)).toBe(true);
   });
+
+  it('sin pdf produce un mensaje válido sin parte adjunta', () => {
+    const raw3 = buildRawMessage({
+      fromEmail: 'wilmar@aifennecia.com',
+      fromName: 'Wilmar Rocha López · Aifennec',
+      to: 'y@x.com',
+      subject: 'Recordatorio de pago',
+      body: 'Hola, se acerca la fecha de pago.',
+    });
+    expect(raw3).not.toMatch(/[+/=]/);
+    const decoded = decode(raw3);
+    expect(decoded).toContain('To: y@x.com');
+    expect(decoded).not.toContain('multipart/mixed');
+    expect(decoded).not.toContain('application/pdf');
+    expect(decoded).not.toContain('Content-Disposition: attachment');
+    expect(decoded).toContain('Content-Type: text/plain; charset="UTF-8"');
+
+    // round-trip body
+    const [, bodyB64RawWithTrail] = decoded.split('\r\n\r\n');
+    const bodyB64 = bodyB64RawWithTrail.replace(/\s/g, '');
+    expect(decodeBase64(bodyB64)).toBe('Hola, se acerca la fecha de pago.');
+  });
+
+  it('rechaza CRLF en to incluso sin pdf', () => {
+    expect(() => buildRawMessage({
+      fromEmail: 'wilmar@aifennecia.com',
+      fromName: 'Wilmar Rocha López · Aifennec',
+      to: 'victim@x.com\r\nBcc: evil@x.com',
+      subject: 'Recordatorio',
+      body: 'Hola',
+    })).toThrow(/Valor de cabecera inválido \(CRLF\) en to/);
+  });
 });
