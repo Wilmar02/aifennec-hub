@@ -14,6 +14,7 @@
     {
       "id": "yenny",
       "activo": true,
+      "recordatorios": true,
       "razonSocial": "Yenny Solórzano — Agencia Bio",
       "email": "ysolorzano7@gmail.com",
       "emisor": "wilmar",
