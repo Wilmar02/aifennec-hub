@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import { logger } from '../infra/logger.js';
 import { env } from '../infra/env.js';
 import { runCuotasResumenMensual, runCuotasRecordatorioDiario, runResumenDiario } from '../modules/gastos/cuotas-cron.js';
-import { runCobranzaDraftsJob } from '../modules/cobranza-drafts/index.js';
+import { runCobranzaDraftsJob, runRemindersJob } from '../modules/cobranza-drafts/index.js';
 
 // Bot solo-financiero: se registran los jobs de gastos + cobranza-drafts.
 // El motor VIEJO `src/modules/cobranza/` (GHL, WhatsApp, dunning) y LinkedIn-ideas
@@ -60,5 +60,20 @@ export function startScheduler(): void {
       });
     },
     { timezone: env.COBRANZA_DRAFTS_TIMEZONE }
+  );
+
+  // Cobranza-recordatorios: cron diario que deja borradores de recordatorio de pago
+  // (T-2 preventivo / T+3 mora) en Gmail para clientes con recordatorios: true.
+  // Nunca envía; solo borradores.
+  logger.info({ cron: env.COBRANZA_RECORDATORIOS_CRON }, 'scheduler: registering cobranza-recordatorios job');
+  cron.schedule(
+    env.COBRANZA_RECORDATORIOS_CRON,
+    () => {
+      logger.info('scheduler: triggering cobranza-recordatorios');
+      runRemindersJob().catch((err) => {
+        logger.error({ err }, 'scheduler: cobranza-recordatorios crashed');
+      });
+    },
+    { timezone: env.COBRANZA_RECORDATORIOS_TIMEZONE }
   );
 }

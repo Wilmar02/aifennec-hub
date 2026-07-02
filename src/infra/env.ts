@@ -28,6 +28,8 @@ const envSchema = z.object({
   COBRANZA_DRAFTS_TIMEZONE: z.string().default('America/Bogota'),
   COBRANZA_DRAFTS_CONFIG_PATH: z.string().default(''),
   COBRANZA_DRAFTS_STATE_PATH: z.string().default(''),
+  COBRANZA_RECORDATORIOS_CRON: z.string().default('0 8 * * *'),
+  COBRANZA_RECORDATORIOS_TIMEZONE: z.string().default('America/Bogota'),
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_KEY: z.string().optional(),
   ALLOWED_TELEGRAM_IDS: z.string().default(''),

@@ -12,6 +12,8 @@
     "cobranza:dry": "tsx src/modules/cobranza/index.ts --dry",
     "cobranza:drafts": "tsx src/modules/cobranza-drafts/index.ts",
     "cobranza:drafts:dry": "tsx src/modules/cobranza-drafts/index.ts --dry",
+    "cobranza:reminders": "tsx src/modules/cobranza-drafts/index.ts --reminders",
+    "cobranza:reminders:dry": "tsx src/modules/cobranza-drafts/index.ts --reminders --dry",
     "migrate": "tsx src/db/migrate.ts",
     "test": "vitest run",
     "test:watch": "vitest"

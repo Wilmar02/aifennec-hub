@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { env } from '../../infra/env.js';
 import { logger } from '../../infra/logger.js';
 import { runCobranzaDrafts } from './run.js';
+import { runReminders } from './reminders-run.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -24,12 +25,27 @@ export async function runCobranzaDraftsJob(): Promise<void> {
   }
 }
 
-// CLI: `pnpm cobranza:drafts` / `pnpm cobranza:drafts:dry`
+export async function runRemindersJob(): Promise<void> {
+  try {
+    const { configPath, saJsonPath } = paths();
+    const res = await runReminders({ configPath, saJsonPath, dryRun: false });
+    logger.info({ creados: res.creados.length }, 'cobranza-drafts/reminders: job ok');
+  } catch (err) {
+    logger.error({ err }, 'cobranza-drafts/reminders: job crashed');
+    throw err;
+  }
+}
+
+// CLI: `pnpm cobranza:drafts` / `pnpm cobranza:drafts:dry` / `pnpm cobranza:reminders[:dry]` (--reminders)
 const entry = process.argv[1]?.replace(/\\/g, '/') ?? '';
 const isCli = /cobranza-drafts\/index\.(ts|js)$/.test(entry);
 if (isCli) {
   const dryRun = process.argv.includes('--dry');
-  runCobranzaDrafts({ ...paths(), dryRun })
+  const { configPath, saJsonPath, statePath } = paths();
+  const task = process.argv.includes('--reminders')
+    ? runReminders({ configPath, saJsonPath, dryRun })
+    : runCobranzaDrafts({ configPath, statePath, saJsonPath, dryRun });
+  task
     .then((res) => { console.log(JSON.stringify(res, null, 2)); process.exit(0); })
     .catch((err) => { console.error(err); process.exit(1); });
 }
