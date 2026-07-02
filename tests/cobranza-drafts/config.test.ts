@@ -57,4 +57,11 @@ describe('loadConfig', () => {
     bad.clientes[0].emisor = 'fantasma';
     expect(() => loadConfig(write(bad))).toThrow(/emisor/i);
   });
+
+  it('carga un cliente con recordatorios: true', () => {
+    const withReminders = structuredClone(VALID);
+    (withReminders.clientes[0] as { recordatorios?: boolean }).recordatorios = true;
+    const cfg = loadConfig(write(withReminders));
+    expect(cfg.clientes[0].recordatorios).toBe(true);
+  });
 });

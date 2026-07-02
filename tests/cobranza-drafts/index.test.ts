@@ -14,4 +14,10 @@ describe('seed clientes.json', () => {
     expect(cfg.remitente.email).toBe('wilmar@aifennecia.com');
     expect(cfg.clientes.length).toBeGreaterThan(0);
   });
+
+  it('yenny tiene recordatorios activados', () => {
+    const cfg = loadConfig(seed);
+    const yenny = cfg.clientes.find((c) => c.id === 'yenny');
+    expect(yenny?.recordatorios).toBe(true);
+  });
 });

@@ -28,6 +28,7 @@ const clienteSchema = z.object({
   moneda: z.enum(['COP', 'USD']),
   conceptoPeriodo: z.string().min(1),
   notaCorreo: z.string().optional(),
+  recordatorios: z.boolean().optional(),
   items: z.array(itemSchema),
 });
 
